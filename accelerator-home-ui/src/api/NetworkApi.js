@@ -45,6 +45,11 @@ export default class Network {
             this._events.get('onDefaultInterfaceChanged')(notification);
           }
         });
+        this._thunder.on(this.callsign, 'onConnectionStatusChanged', notification => {
+          if (this._events.has('onConnectionStatusChanged')) {
+            this._events.get('onConnectionStatusChanged')(notification);
+          }
+        });
         console.log('Activation success')
         resolve(true)
       });
@@ -76,17 +81,109 @@ export default class Network {
       })
     })
   }
-  getDefaultInterface() {
+  /**
+   * Function to return available interfaces.
+   */
+  getInterfaces(){
     return new Promise((resolve, reject) => {
-      this._thunder.call(this.callsign, 'getDefaultInterface').then(result => {
-        if (result.success) {  
+      this._thunder.call(this.callsign,'getInterfaces').then(result => {
+        if(result.success){
+          resolve(result.interfaces)
+        }
+      }).catch(err => {
+        console.error(`getInterfaces fail: ${err}`)
+        reject(err)
+      })
+    })
+  }
+
+  /**
+   * Function to return default interfaces.
+   */
+  getDefaultInterface(){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'getDefaultInterface').then(result => {
+        if(result.success){
           resolve(result.interface)
         }
-        reject(false)
-        })
-        .catch(err => {
+      }).catch(err => {
+        console.error(`getDefaultInterface fail: ${err}`)
+        reject(err)
+      })
+    })
+  }
+
+  setDefaultInterface(interfaceName){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'setDefaultInterface', 
+        {
+          "interface": interfaceName,
+          "persist": true
+        }).then(result => {
+          resolve(result)
+        }).catch(err => {
+          console.error(`setDefaultInterface fail: ${err}`)
           reject(err)
         })
     })
   }
+
+  getSTBIPFamily(){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'getSTBIPFamily').then(result => {
+        //need to check
+      })
+    })
+  }
+
+  /**
+   * Function to return IP Settings.
+   */
+
+  getIPSettings(currentInterface){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'getIPSettings', 
+        {
+          "interface": currentInterface,
+        }).then(result => {
+          resolve(result)
+      }).catch(err => {
+        console.error(`getIPSettings fail: ${err}`)
+        reject(err)
+      })
+    })
+  }
+
+  /**
+   * Function to set IP Settings.
+   */
+
+  setIPSettings(IPSettings){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'setIPSettings', IPSettings).then(result => {
+          resolve(result)
+      }).catch(err => {
+        console.error(`setIPSettings fail: ${err}`)
+        reject(err)
+      })
+    })
+  }
+
+
+  isConnectedToInternet(){
+    return new Promise((resolve, reject) => {
+      this._thunder.call(this.callsign,'isConnectedToInternet').then(result => {
+        if(result.success){
+          resolve(result.connectedToInternet)
+        }
+      }).catch(err => {
+        console.error(`isConnectedToInternet fail: ${err}`)
+        reject(err)
+      })
+    })
+  }
+
+
+
+
 }

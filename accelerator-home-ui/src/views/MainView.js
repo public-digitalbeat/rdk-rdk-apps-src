@@ -16,72 +16,138 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Lightning, Router, Storage, Utils } from '@lightningjs/sdk'
+import { Lightning, Storage, Language, Router, Registry } from '@lightningjs/sdk'
 import ListItem from '../items/ListItem.js'
-import AppListItem from '../items/AppListItem.js'
 import ThunderJS from 'ThunderJS'
 import AppApi from '../api/AppApi.js'
-import ArrowIconItem from '../items/ArrowIconlItem.js'
-import HdmiCec_2Api from '../api/HdmiCec_2Api'
+import UsbApi from '../api/UsbApi.js'
+import { CONFIG } from '../Config/Config.js'
+import XcastApi from '../api/XcastApi'
+import HomeApi from '../api/HomeApi.js'
+import GracenoteItem from '../items/GracenoteItem.js'
+import { List } from '@lightningjs/ui'
+import HDMIApi from '../api/HDMIApi.js'
+import CompositeApi from '../api/CompositeApi.js'
 
 /** Class for main view component in home UI */
 export default class MainView extends Lightning.Component {
   /**
    * Function to render various elements in main view.
    */
+  _onChanged() {
+    this.widgets.menu.updateTopPanelText(Language.translate('home'))
+  }
   static _template() {
     return {
+      rect: true,
+      color: CONFIG.theme.background,
+      w: 1920,
+      h: 1080,
+      clipping: true,
       MainView: {
-        x: 0,
-        y: 0,
-        w: 1765,
-        h: 1080,
-        clipping: true,
-        Text1: {
-          x: 10,
-          y: 50,
+        w: 1720,
+        h: 1200,
+        xIndex: 2,
+        y: 270,
+        x: 200,
+        clipping: false,
+        Text0: {
+          alpha: 0,
+          h: 30,
           text: {
-            fontFace: 'MS-Regular',
-            fontSize: 40,
-            text: 'Apps',
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Popular Movies'),
+            fontStyle: 'normal',
+            textColor: 0xFFFFFFFF,
+          },
+          zIndex: 0
+        },
+        Gracenote: {
+          y: 50,
+          x: -20,
+          flex: { direction: 'row', paddingLeft: 20, wrap: false },
+          type: Lightning.components.ListComponent,
+          w: 1745,
+          h: 400,
+          itemSize: 500,
+          roll: true,
+          rollMax: 1745,
+          horizontal: true,
+          itemScrollOffset: -1,
+          clipping: false,
+        },
+        Inputs: {
+          y: 0,
+          visible: false,//false by default
+          Title: {
+            y: 0,
+            h: 30,
+            text: {
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+              text: Language.translate('Input Select'),
+              fontStyle: 'normal',
+              textColor: 0xFFFFFFFF,
+            },
+            zIndex: 0
+          },
+          Slider: {
+            x: -20,
+            y: 37,
+            type: Lightning.components.ListComponent,
+            flex: { direction: 'row', paddingLeft: 20, wrap: false },
+            w: 1745,
+            h: 300,
+            itemSize: 288,
+            roll: true,
+            rollMax: 1745,
+            horizontal: true,
+            itemScrollOffset: -4,
+            clipping: false,
+          }
+        },
+        Text1: {
+          h: 30,
+          text: {
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Featured Content'),
             fontStyle: 'normal',
             textColor: 0xFFFFFFFF,
           },
           zIndex: 0
         },
         AppList: {
+          y: 37,
           x: 0,
-          y: 137,
-          flex: { direction: 'row', paddingLeft: 15, wrap: false },
-          type: Lightning.components.ListComponent,
-          w: 1745,
-          h: 300,
-          itemSize: 250,
-          roll: true,
-          rollMax: 1745,
-          horizontal: true,
-          itemScrollOffset: -5,
-          clipping: false,
+          type: List,
+          h: 400,
+          scroll: {
+            after: 2
+          },
+          spacing: 20,
         },
         Text2: {
-          x: 10,
-          y: 338,
+          // x: 10 + 25,
+          y: 395,
+          h: 30,
           text: {
-            fontFace: 'MS-Regular',
-            fontSize: 40,
-            text: 'Metro Apps',
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Lightning Apps'),
             fontStyle: 'normal',
             textColor: 0xFFFFFFFF,
           },
         },
         MetroApps: {
-          x: 0,
-          y: 410,
+          x: -20,
+          y: 435,
           type: Lightning.components.ListComponent,
           flex: { direction: 'row', paddingLeft: 20, wrap: false },
           w: 1745,
-          h: 400,
-          itemSize: 328,
+          h: 300,
+          itemSize: 288,
           roll: true,
           rollMax: 1745,
           horizontal: true,
@@ -89,472 +155,1046 @@ export default class MainView extends Lightning.Component {
           clipping: false,
         },
         Text3: {
-          x: 10,
-          y: 665,
+          // x: 10 + 25,
+          y: 673,
+          h: 30,
           text: {
-            fontFace: 'MS-Regular',
-            fontSize: 40,
-            text: 'TVShows',
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Featured Video on Demand'),
             fontStyle: 'normal',
             textColor: 0xFFFFFFFF,
           },
         },
         TVShows: {
-          x: 0,
-          y: 735,
+          x: -20,
+          y: 710,
           w: 1745,
           h: 400,
           type: Lightning.components.ListComponent,
           flex: { direction: 'row', paddingLeft: 20, wrap: false },
           roll: true,
-          itemSize: 328,
+          itemSize: 277,
           rollMax: 1745,
           horizontal: true,
           itemScrollOffset: -4,
           clipping: false,
         },
-        RightArrow: {
-          x: 0,
-          y: 0,
-          w: 25,
-          h: 750,
-          type: Lightning.components.ListComponent,
-          roll: true,
-          horizontal: false,
-          invertDirection: true,
-          alpha: 0.9,
+        Text4: {
+          // x: 10 + 25,
+          y: 938,
+          h: 30,
+          text: {
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Lightning Showcase'),
+            fontStyle: 'normal',
+            textColor: 0xFFFFFFFF,
+          },
         },
-        LeftArrow: {
-          x: 0,
-          y: 0,
-          w: 25,
-          h: 750,
+        ShowcaseApps: {
+          x: -20,
+          y: 978,
           type: Lightning.components.ListComponent,
+          flex: { direction: 'row', paddingLeft: 20, wrap: false },
+          w: 1745,
+          h: 400,
+          itemSize: 277,
           roll: true,
-          horizontal: false,
-          invertDirection: true,
-          alpha: 0.9,
+          rollMax: 1745,
+          horizontal: true,
+          itemScrollOffset: -4,
+          clipping: false,
         },
-      },
+        Text5: {
+          alpha: 0,
+          // x: 10 + 25,
+          y: 1203,
+          h: 30,
+          text: {
+            fontFace: CONFIG.language.font,
+            fontSize: 25,
+            text: Language.translate('Partner Apps'),
+            fontStyle: 'normal',
+            textColor: 0xFFFFFFFF,
+          },
+        },
+        UsbApps: {
+          x: -20,
+          y: 1243,
+          type: Lightning.components.ListComponent,
+          flex: { direction: 'row', paddingLeft: 20, wrap: false },
+          w: 1745,
+          h: 400,
+          itemSize: 277,
+          roll: true,
+          rollMax: 1745,
+          horizontal: true,
+          itemScrollOffset: -4,
+          clipping: false,
+        },
+      }
     }
   }
 
-  _init() {
+  pageTransition() {
+    return 'up'
+  }
+
+  moveDownContent() {
+    let inputSelectOffset = 0
+    if (this.inputSelect) {
+      inputSelectOffset = 275
+    }
+    this.tag('Text0').alpha = 1
+    this.tag("Inputs").y = 440
+    this.tag('Text1').y = 440 + inputSelectOffset
+    this.tag('AppList').y = 477 + inputSelectOffset
+    this.tag("Text2").y = 705 + inputSelectOffset
+    this.tag("MetroApps").y = 745 + inputSelectOffset
+    this.tag("Text3").y = 980 + inputSelectOffset
+    this.tag("TVShows").y = 1020 + inputSelectOffset
+    this.tag("Text4").y = 1248 + inputSelectOffset
+    this.tag("ShowcaseApps").y = 1288 + inputSelectOffset
+    this.tag("Text5").y = 1516 + inputSelectOffset
+    this.tag("UsbApps").y = 1556 + inputSelectOffset
+  }
+
+  showInputSelect() {
+    this.tag("Inputs").visible = true
+    let gracenoteOffset = 0
+    if (!this.gracenote) {
+      gracenoteOffset = 440
+    }
+    this.tag("Inputs").y = this.gracenote ? 440 : 0
+    this.tag('Text1').y = 440 + 275 - gracenoteOffset
+    this.tag('AppList').y = 477 + 275 - gracenoteOffset
+    this.tag("Text2").y = 705 + 275 - gracenoteOffset
+    this.tag("MetroApps").y = 745 + 275 - gracenoteOffset
+    this.tag("Text3").y = 980 + 275 - gracenoteOffset
+    this.tag("TVShows").y = 1020 + 275 - gracenoteOffset
+    this.tag("Text4").y = 1248 + 275 - gracenoteOffset
+    this.tag("ShowcaseApps").y = 1288 + 275 - gracenoteOffset
+    this.tag("Text5").y = 1516 + 275 - gracenoteOffset
+    this.tag("UsbApps").y = 1556 + 275 - gracenoteOffset
+  }
+
+
+  /**
+   * @param {any} data
+   */
+  setGracenoteData(data) {
+    if (!this.gracenote) {
+      this.gracenote = true
+      this.key = data.key
+      this.graceNoteItems = data.data
+      this.appItems = this.currentItems
+    }
+  }
+
+  _handleBack() { }
+  _handleMenu() {
+    this._handleBack()
+  }
+
+  async _init() {
+    this.gracenote = false
+    this.inputSelect = false //false by default
     this.settingsScreen = false
-    this._setState('AppList')
     this.indexVal = 0
     const config = {
       host: '127.0.0.1',
       port: 9998,
       default: 1,
     };
-    var thunder = ThunderJS(config);
+    this.usbApi = new UsbApi();
+    this.homeApi = new HomeApi();
+    this.xcastApi = new XcastApi();
+    this.hdmiApi = new HDMIApi()
+    this.compositeApi = new CompositeApi()
+    this.appApi = new AppApi()
+    var inputPorts = [];
+    let thunder = ThunderJS(config);
     
-    thunder.on('Controller', 'statechange', notification => {
-      var appApi = new AppApi();
-      if (notification) {
-        console.log("controller statechange " + notification.callsign + " " + notification.state + " " + notification.reason)
-      }
-      if (notification && (notification.callsign == 'Cobalt' || notification.callsign == 'Amazon' || notification.callsign == 'Netflix')) {
-        let launchSuspended = (notification.callsign == 'Cobalt') ? Storage.get('launchSuspendedCobalt') :
-                                (notification.callsign == 'Amazon') ? Storage.get('launchSuspendedAmazon') :
-                                (notification.callsign == 'Netflix') ? Storage.get('launchSuspendedNetflix') : false;
-        if ((notification.state == 'Deactivation')  ||
-            (launchSuspended && (notification.state == 'Activated') && (notification.reason == 'Failure')) ||
-            (launchSuspended && (notification.state == 'Activated') && (notification.reason == 'Requested'))) {
-          let params = { applicationName: notification.callsign, state: 'stopped' };
-          if  (launchSuspended && (notification.state == 'Activated') && (notification.reason == 'Requested')) {
-              params = { applicationName: notification.callsign, state: 'suspended' };
+
+    // for initially showing/hiding usb icon
+
+    var appItems = this.homeApi.getAppListInfo()
+    var data = this.homeApi.getPartnerAppsInfo()
+    this.metroApps = this.homeApi.getMetroInfo()
+    this.showcaseApps = this.homeApi.getShowCaseApps()
+
+    var prop_apps = 'applications'
+    var prop_displayname = 'displayName'
+    var prop_uri = 'uri'
+    var prop_apptype = 'applicationType'
+    var prop_url = 'url'
+    var appdetails = []
+    var appdetails_format = []
+    var usbAppsArr = [];
+    var usbApps = 0
+    try {
+      if (data != null && JSON.parse(data).hasOwnProperty(prop_apps)) {
+        appdetails = JSON.parse(data).applications
+        for (var i = 0; i < appdetails.length; i++) {
+          if (
+            appdetails[i].hasOwnProperty(prop_displayname) &&
+            appdetails[i].hasOwnProperty(prop_uri) &&
+            appdetails[i].hasOwnProperty(prop_apptype)
+          ) {
+            usbAppsArr.push(appdetails[i])
+            usbApps++
           }
-          if (notification.state == 'Deactivation') {
-           if ( ((notification.callsign == 'Netflix') &&
-              ((Storage.get('Cobalt') == 'running') || (Storage.get('Cobalt') == 'resumed')   ||
-              (Storage.get('Amazon') == 'running') || (Storage.get('Amazon') == 'resumed')))  ||
-              ( (notification.callsign == 'Cobalt') &&
-              ((Storage.get('Netflix') == 'running') || (Storage.get('Netflix') == 'resumed') ||
-              (Storage.get('Amazon') == 'running') || (Storage.get('Amazon') == 'resumed')))  ||
-              ( (notification.callsign == 'Amazon') &&
-              ((Storage.get('Netflix') == 'running') || (Storage.get('Netflix') == 'resumed') ||
-              (Storage.get('Cobalt') == 'running') || (Storage.get('Cobalt') == 'resumed')))){
-          } else {
-              Storage.set('applicationType', '');
-              appApi.setVisibility('ResidentApp', true);
-              thunder.call('org.rdk.RDKShell', 'moveToFront', { client: 'ResidentApp' }).then(result => {
-                console.log('ResidentApp moveToFront Success' + JSON.stringify(result));
-              });
-              thunder.call('org.rdk.RDKShell', 'setFocus', { client: 'ResidentApp' })
-                .then(result => {
-                  Storage.set('applicationType', '');
-                  console.log('ResidentApp setFocus Success' + JSON.stringify(result));
-                })
-                .catch(err => {
-                  console.log('Error', err);
-                });
-              }
-            }
-          appApi.setAppState(params)
-        } else if ((notification.state == 'Activated') && (notification.reason == 'Failure')) {
-          thunder.call('org.rdk.RDKShell', 'moveToFront', { client: notification.callsign }).then(result => {
-            console.log(notification.callsign + ' setFocus Success' + JSON.stringify(result));
-          });
-          thunder.call('org.rdk.RDKShell', 'setFocus', { client: notification.callsign }).then(result => {
-            Storage.set('applicationType', notification.callsign);
-            let params = {
-              applicationName: notification.callsign,
-              state: 'running'
-            };
-            appApi.setAppState(params);
-            appApi.setVisibility('ResidentApp', false);
-          }).catch(err => {
-            console.log('Error', err);
-          });
         }
+
+        for (var i = 0; i < appItems.length; i++) {
+          appdetails_format.push(appItems[i])
+        }
+
+      } else {
+        appdetails_format = appItems
       }
+    } catch (e) {
+      appdetails_format = appItems
+      console.log('Query data is not proper: ' + e)
+    }
+    this.firstRowItems = appdetails_format
+    this.tempRow = JSON.parse(JSON.stringify(this.firstRowItems));
+    if (this.firstRowItems[0].uri === 'USB') {
+      this.tempRow.shift()
+    }
+    this.appItems = this.tempRow
+    this.usbApps = usbAppsArr
+    var response = false
+    try {
+      response = await this.compositeApi.activate()
+    } catch (error) {
+      response = false
+    }
+
+    if(response) {
+      this.compositeApi.registerEvent('onDevicesChanged', notification => {
+        console.log('onDevicesChanged ', JSON.stringify(notification))
+      })
+      this.compositeApi.registerEvent('onInputStatusChanged', notification => {
+        console.log('onInputStatusChanged ', JSON.stringify(notification))
+        if (notification.status === 'stopped') {
+          this.appApi.setVisibility('ResidentApp', true)
+          this.widgets.fail.notify({ title: this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.inputType + ' ' + 
+                                  this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.displayName, 
+                                  msg: 'Input disconnected' })
+          Router.focusWidget('Fail')
+        }
+      })
+      this.compositeApi.registerEvent('onSignalChanged', notification => {
+        console.log('onSignalChanged ', JSON.stringify(notification))
+      })
+      this.compositeApi.registerEvent('videoStreamInfoUpdate', notification => {
+        console.log('videoStreamInfoUpdate ', JSON.stringify(notification))
+      })
+      this.inputSelect = true 
+      this.appItems = this.tempRow
+      
+      const compositeInput = await this.compositeApi.getCompositeInputDevices()
+      for(let i = 0; i < compositeInput.length; i++) {
+        inputPorts.push(
+        {
+              inputType: 'Composite',
+              id: compositeInput[i].id,
+              locator: compositeInput[i].locator,
+              connected: compositeInput[i].connected
+        })
+      }      
+    } else {
+      console.log('CompositeInput Plugin not activated')
+    }
+      
+    try {
+      response = await this.hdmiApi.activate();
+    } catch (error) {
+      response = false
+    }
+
+    if(response) {
+      this.hdmiApi.registerEvent('onDevicesChanged', notification => {
+        console.log('onDevicesChanged ', JSON.stringify(notification))
+      })
+      this.hdmiApi.registerEvent('onInputStatusChanged', notification => {
+        console.log('onInputStatusChanged ', JSON.stringify(notification))
+        if (notification.status === 'stopped') {
+          this.appApi.setVisibility('ResidentApp', true)
+          this.widgets.fail.notify({ title: this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.inputType + ' ' + 
+                                  this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.displayName, 
+                                  msg: 'Input disconnected' })
+          Router.focusWidget('Fail')
+        }
+      })
+      this.hdmiApi.registerEvent('onSignalChanged', notification => {
+        console.log('onSignalChanged ', JSON.stringify(notification))
+      })
+      this.hdmiApi.registerEvent('videoStreamInfoUpdate', notification => {
+        console.log('videoStreamInfoUpdate ', JSON.stringify(notification))
+      })
+      this.inputSelect = true
+      this.appItems = this.tempRow
+      
+      const hdmiInput = await this.hdmiApi.getHDMIDevices()
+      for(let i = 0; i < hdmiInput.length; i++) {
+        inputPorts.push(
+        {
+              inputType: 'HDMI',
+              id: hdmiInput[i].id,
+              locator: hdmiInput[i].locator,
+              connected: hdmiInput[i].connected
+        })
+      }      
+    } else {
+      console.log('HDMIInput Plugin not activated')
+    }
+
+    if(this.inputSelect)
+      this.inputItems = inputPorts      
     
-    });
-    this._hdmicec2 = new HdmiCec_2Api()
-	  thunder.call('Controller', 'activate', { callsign: 'org.rdk.DisplaySettings' })
-        .then(result => {
-          console.log('DisplaySettings activated', result)
-    		thunder.on('DisplaySettings', 'connectedVideoDisplaysUpdated', notification => {
-      		if (notification) {
-        		console.log("displaysettings connectedvideodisplays event: " + notification.connectedVideoDisplays )
-      		}
-	});
-    });
+    // for USB event
+    const registerListener = () => {
+
+      let listener;
+
+      listener = thunder.on('org.rdk.UsbAccess', 'onUSBMountChanged', (notification) => {
+        console.log('onUsbMountChanged notification: ', JSON.stringify(notification))
+        Storage.set('UsbMountedStatus', notification.mounted ? 'mounted' : 'unmounted')
+        const currentPage = window.location.href.split('#').slice(-1)[0]
+        if (Storage.get('UsbMedia') === 'ON') {
+
+          if (notification.mounted) {
+            this.appItems = this.firstRowItems
+            this._setState('AppList.0')
+          } else if (!notification.mounted) {
+            this.appItems = this.tempRow
+            this._setState('AppList.0')
+          }
+          console.log(`app items = ${this.appItems} ; `);
+
+          if (currentPage === 'menu') { //refresh page to hide or show usb icon
+            console.log('page refreshed on unplug/plug')
+            // Router.navigate('menu');
+            // document.location.reload()
+          }
+
+          if (!notification.mounted) { //if mounted is false
+            if (currentPage === 'usb' || currentPage === 'usb/image' || currentPage === 'usb/player') { // hot exit if we are on usb screen or sub screens
+              // this.$changeHomeText('Home')
+              Router.navigate('menu');
+            }
+          }
+        }
+        console.log(`usb event successfully registered`);
+      })
+
+      return listener;
+    }
+
+    thunder.on('org.rdk.Network.1', 'onIPAddressStatusChanged', notification => {
+      console.log('IP ADDRESS changed', JSON.stringify(notification))
+      if (notification.status === 'ACQUIRED') {
+        Storage.set('ipAddress', notification.ip4Address)
+        this.metroApps = this.homeApi.getOnlineMetroApps()
+      } else {
+        Storage.set('ipAddress', null)
+        //this.metroApps = this.homeApi.getMetroInfo()
+      }
+
+    })
+
+    this.fireAncestors("$mountEventConstructor", registerListener.bind(this))
+
+    this.refreshFirstRow()
+    // this._setState('AppList.0')
   }
 
-  _active() {
-    if (this.settingsScreen) {
-      let app = this.parent.parent
-      this._appAnimation = app.animation({
-        duration: 0,
-        repeat: 0,
-        stopMethod: 'immediate',
-        actions: [
-          { p: 'x', v: { 0: 0, 1: -320 } },
-          { p: 'y', v: { 0: 0, 1: -180 } },
-          { p: 'scale', v: { 0: 1, 1: 1.17 } },
-        ],
+  _firstActive() {
+    if (!Storage.get('UsbMedia')) {
+      this.usbApi.activate().then(res => {
+        Storage.set('UsbMedia', 'ON')
+        this.fireAncestors('$registerUsbMount')
+
       })
-      this._appAnimation.start()
-      this.settingsScreen = false
+    } else if (Storage.get('UsbMedia') === 'ON') {
+      this.usbApi.activate().then(res => {
+        this.fireAncestors('$registerUsbMount')
+      })
+    } else if (Storage.get('UsbMedia') === 'OFF') {
+      // deactivate usb Plugin here 
+      this.usbApi.deactivate().then((res) => {
+        console.log(`disabled the Usb Plugin`);
+      }).catch(err => {
+        console.error(`error while disabling the usb plugin = ${err}`)
+      })
     }
   }
+
+
+  _focus() {
+    if (this.gracenote) {
+      this._setState("Gracenote")
+    } else if (this.inputSelect) {
+      this._setState("Inputs")
+    } else {
+      this._setState("AppList.0")
+    }
+  }
+
+  _firstEnable() {
+    this.appApi.setVisibility('ResidentApp', true);
+    console.timeEnd('PerformanceTest')
+    console.log('Mainview Screen timer end - ', new Date().toUTCString())
+  }
+
+
+  scroll(val) {
+    this.tag('MainView').patch({
+      smooth: {
+        y: [val, { timingFunction: 'ease', duration: 0.7 }]
+      }
+    })
+  }
+
+  refreshFirstRow() {
+    if (Storage.get('UsbMedia') === 'ON') {
+      this.usbApi.activate().then(res => {
+        this.usbApi.getMountedDevices().then(result => {
+          if (result.mounted.length === 1) {
+            this.appItems = this.firstRowItems
+          } else {
+            this.appItems = this.tempRow
+          }
+        })
+      })
+    } else if (Storage.get('UsbMedia') === 'OFF') {
+      this.appItems = this.tempRow
+    } else {
+      Storage.set('UsbMedia', 'ON')
+      this.usbApi.activate().then(res => {
+        this.usbApi.getMountedDevices().then(result => {
+          if (result.mounted.length === 1) {
+            this.appItems = this.firstRowItems
+          } else {
+            this.appItems = this.tempRow
+          }
+        })
+      })
+    }
+  }
+
+  /**
+   * Function to set details of items in gracenote list.
+   */
+  set graceNoteItems(items) {
+    this.moveDownContent()
+    this.tag('Gracenote').items = items.map((info, idx) => {
+      return {
+        w: 480,
+        h: 270,
+        type: GracenoteItem,
+        data: info,
+        key: this.key,
+        focus: 1.11,
+        unfocus: 1,
+        idx: idx,
+        bar: 10
+      }
+    })
+    this._setState('Gracenote')
+  }
+
+  set inputItems(items) {
+    this.showInputSelect()
+    this.tag("Inputs.Slider").items = items.map((info, idx) => {
+      return {
+        w: 268,
+        h: 151,
+        type: ListItem,
+        data: { ...info, displayName: `Port ${info.id}`, 
+          url: (info.inputType === 'HDMI')?"/images/inputs/HDMI.jpg":"/images/inputs/Composite.jpg"
+        },
+        focus: 1.11,
+        unfocus: 1,
+        idx: idx,
+        bar: 12
+      }
+    })
+    this._setState("Inputs.0")
+  }
+
+  set showcaseApps(items) {
+    this.tag('ShowcaseApps').items = items.map((info, idx) => {
+      return {
+        w: 268,
+        h: 151,
+        type: ListItem,
+        data: info,
+        focus: 1.11,
+        unfocus: 1,
+        idx: idx,
+        bar: 12
+      }
+    })
+  }
+
 
   /**
    * Function to set details of items in app list.
    */
   set appItems(items) {
-    this.tag('AppList').items = items.map(info => {
+    this.currentItems = items
+    this.tag('AppList').clear()
+    this.tag('AppList').add(items.map((info, idx) => {
       return {
-        w: 235,
-        h: 136,
-        type: AppListItem,
+        w: this.gracenote || this.inputSelect ? 268 : 454,
+        h: this.gracenote || this.inputSelect ? 151 : 255,
+        type: ListItem,
         data: info,
-        focus: 1.2,
+        focus: 1.11,
         unfocus: 1,
-        x_text: 120,
-        y_text: 140,
+        idx: idx,
+        bar: 12
       }
-    })
-    this.tag('AppList').start()
-  }
-  /**
-  * Function to set details of items in right Icons list.
-  * 
-  */
-  set rightArrowIcons(items) {
-    this.tag('RightArrow').items = items.map((info, index) => {
-      this.data = info
-      return {
-        w: index == 0 ? 20 : 25,
-        h: index == 0 ? 30 : 35,
-        x: 1735,
-        y: index == 0 ? 210 : (index == 1 ? 405 : (index == 2 ? 635 : 0)),
-        type: ArrowIconItem,
-        data: info,
-      }
-    })
-    this.tag('RightArrow').start()
-  }
-  /**
-  * Function to set details of items in left Icons list.
-  * 
-  */
-  set leftArrowIcons(items) {
-    this.tag('LeftArrow').patch({ x: 25 })
-    this.tag('LeftArrow').items = items.map((info, index) => {
-      this.data = info
-      return {
-        w: index == 0 ? 20 : 25,
-        h: index == 0 ? 30 : 35,
-        y: index == 0 ? 205 : (index == 1 ? 405 : (index == 2 ? 635 : 0)),
-        type: ArrowIconItem,
-        data: info,
-      }
-    })
-    this.tag('LeftArrow').start()
+    }))
   }
 
   set metroApps(items) {
     this.tag('MetroApps').items = items.map((info, index) => {
       return {
-        w: 308,
-        h: 200,
+        w: 268,
+        h: 151,
         type: ListItem,
         data: info,
-        focus: 1.2,
+        focus: 1.15,
         unfocus: 1,
-        x_text: 106,
-        y_text: 140,
+        idx: index,
+        bar: 12
       }
     })
-    this.tag('MetroApps').start()
   }
 
   /**
    * Function to set details of items in tv shows list.
    */
   set tvShowItems(items) {
-    this.tag('TVShows').items = items.map(info => {
+    this.tag('TVShows').items = items.map((info, idx) => {
       return {
-        w: 308,
-        h: 200,
+        w: 257,
+        h: 145,
         type: ListItem,
         data: info,
-        focus: 1.2,
+        focus: 1.15,
         unfocus: 1,
-        x_text: 218,
-        y_text: 264,
+        idx: idx,
+        bar: 12
       }
     })
-    this.tag('TVShows').start()
   }
 
+  set usbApps(items) {
+    if (items.length > 0) {
+      this.tag('Text5').alpha = 1;
+    }
+    this.tag('UsbApps').items = items.map((info, index) => {
+      return {
+        w: 257,
+        h: 145,
+        type: ListItem,
+        data: info,
+        focus: 1.15,
+        unfocus: 1,
+        idx: index,
+        bar: 12
+      }
+    })
+  }
   /**
    * Function to set the state in main view.
    */
-  set index(index) {
-    this.indexVal = index
-    if (this.indexVal == 0) {
+  index(index) {
+    if (index == 0) {
       this._setState('AppList')
-    } else if (this.indexVal == 1) {
+    } else if (index == 1) {
       this._setState('MetroApps')
-    } else if (this.indexVal == 2) {
+    } else if (index == 2) {
       this._setState('TVShows')
-    } else if (this.indexVal == 3) {
-      this._setState('RightArrow')
+    } else if (index == 3) {
+      if (this.tag('UsbApps').length) {
+        this._setState('UsbApps')
+      } else {
+        this._setState('TVShows')
+      }
     }
   }
-
-  /**
-   * Function to reset the main view rows to initial state.
-   */
-  reset() {
-    for (var i = this.tag('AppList').index; i > 0; i--) {
-      this.tag('AppList').setPrevious()
-    }
-    for (var i = this.tag('MetroApps').index; i > 0; i--) {
-      this.tag('MetroApps').setPrevious()
-    }
-    for (var i = this.tag('TVShows').index; i > 0; i--) {
-      this.tag('TVShows').setPrevious()
-    }
-  }
-
   /**
    * Function to define various states needed for main view.
    */
   static _states() {
     return [
-      class AppList extends this {
+      class Gracenote extends this {
+        $enter() {
+          this.indexVal = 0
+          this.scroll(270)
+        }
+        $exit() {
+          this.tag('Text0').text.fontStyle = 'normal'
+        }
         _getFocused() {
-          if (this.tag('AppList').length) {
-            this.fireAncestors('$changeBackgroundImageOnFocus', this.tag('AppList').element.data.url)
-            return this.tag('AppList').element
+          this.tag('Text0').text.fontStyle = 'bold'
+          if (this.tag('Gracenote').length) {
+            return this.tag('Gracenote').element
+          }
+        }
+        _handleDown() {
+          if (this.inputSelect) {
+            this._setState('Inputs')
+          } else {
+            this._setState('AppList')
           }
         }
         _handleRight() {
-          if (this.tag('AppList').length - 1 != this.tag('AppList').index) {
-            this.tag('AppList').setNext()
-            this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('AppList').element.data.url)
-            return this.tag('AppList').element
+          if (this.tag('Gracenote').length - 1 != this.tag('Gracenote').index) {
+            this.tag('Gracenote').setNext()
+            return this.tag('Gracenote').element
+          }
+        }
+        _handleUp() {
+          this.widgets.menu.notify('TopPanel')
+        }
+        _handleLeft() {
+          this.tag('Text0').text.fontStyle = 'normal'
+          if (0 != this.tag('Gracenote').index) {
+            this.tag('Gracenote').setPrevious()
+            return this.tag('Gracenote').element
+          } else {
+            Router.focusWidget('Menu')
+          }
+        }
+        _handleEnter() {
+          Router.navigate('menu/details', { gracenoteItem: this.tag('Gracenote').element.data, key: this.key })
+        }
+      },
+      class Inputs extends this {
+        $enter() {
+          this.tag('Inputs.Title').text.fontStyle = 'bold'
+          this.indexVal = 0
+          this.scroll(270)
+        }
+        $exit() {
+          this.tag('Inputs.Title').text.fontStyle = 'normal'
+        }
+        _getFocused() {
+          this.tag('Inputs.Title').text.fontStyle = 'bold'
+          if (this.tag("Inputs.Slider").length) {
+            return this.tag("Inputs.Slider").element
+          }
+        }
+        _handleDown() {
+          this._setState('AppList')
+        }
+        _handleUp() {
+          if (this.gracenote) {
+            this._setState('Gracenote')
+          } else {
+            this.widgets.menu.notify('TopPanel')
           }
         }
         _handleLeft() {
-          if (0 != this.tag('AppList').index) {
-            this.tag('AppList').setPrevious()
-            this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('AppList').element.data.url)
-            return this.tag('AppList').element
+          if (0 != this.tag('Inputs.Slider').index) {
+            this.tag('Inputs.Slider').setPrevious()
+            return this.tag('Inputs.Slider').element
+          } else {
+            this.tag('Inputs.Title').text.fontStyle = 'normal'
+            Router.focusWidget('Menu')
+          }
+        }
+        _handleRight() {
+          if (this.tag('Inputs.Slider').length - 1 != this.tag('Inputs.Slider').index) {
+            this.tag('Inputs.Slider').setNext()
+            return this.tag('Inputs.Slider').element
+          }
+        }
+
+        _handleEnter() {
+          if(this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.inputType === 'HDMI') {
+            this.hdmiApi.setHDMIInput(this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data)
+              .then(res => {
+                console.log('completed')
+                Storage.set('applicationType', 'HDMI');
+                this.appApi.setVisibility('ResidentApp', false);
+              })
+              .catch(err => {
+                console.log('failed', err)
+                this.widgets.fail.notify({ title: this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.displayName, msg: 'Select a different input.' })
+                Router.focusWidget('Fail')
+              })
+          }
+          if(this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.inputType === 'Composite') {
+            this.compositeApi.startCompositeInput(this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.id)
+              .then(res => {
+                console.log('completed')
+                Storage.set('applicationType', 'Composite');
+                this.appApi.setVisibility('ResidentApp', false);
+              })
+              .catch(err => {
+                console.log('failed', err)
+                this.widgets.fail.notify({ title: this.tag('Inputs.Slider').items[this.tag('Inputs.Slider').index].data.displayName, msg: 'Select a different input.' })
+                Router.focusWidget('Fail')
+              })
+          }
+        }
+
+      },
+      class AppList extends this {
+        $enter() {
+          this.indexVal = 0
+          if (this.inputSelect && this.gracenote) {
+            this.scroll(-100)
+          } else {
+            this.scroll(270)
+          }
+        }
+        $exit() {
+          this.tag('Text1').text.fontStyle = 'normal'
+        }
+        _getFocused() {
+          this.tag('Text1').text.fontStyle = 'bold'
+          if (this.tag('AppList').length) {
+            return this.tag('AppList')
           }
         }
         _handleDown() {
           this._setState('MetroApps')
         }
         _handleUp() {
-          console.log('handle up')
-          this.fireAncestors('$goToTopPanel', 0)
+          if (this.inputSelect) {
+            this._setState('Inputs')
+          }
+          else if (this.gracenote) {
+            this._setState('Gracenote')
+          } else {
+            this.widgets.menu.notify('TopPanel')
+          }
+
+        }
+        _handleLeft() {
+          this.tag('Text1').text.fontStyle = 'normal'
+          Router.focusWidget('Menu')
         }
         _handleEnter() {
-          console.log('_handleEnter Mainview');
-          var appApi = new AppApi();
-          var applicationType = this.tag('AppList').items[this.tag('AppList').index].data.applicationType;
+          let applicationType = this.tag('AppList').items[this.tag('AppList').index].data.applicationType;
           this.uri = this.tag('AppList').items[this.tag('AppList').index].data.uri;
-          var appApi = new AppApi();
           applicationType = this.tag('AppList').items[this.tag('AppList').index].data.applicationType;
           Storage.set('applicationType', applicationType);
           this.uri = this.tag('AppList').items[this.tag('AppList').index].data.uri;
           if (Storage.get('applicationType') == 'Cobalt') {
-            appApi.launchCobalt("Cobalt");
-          
-          } else if (Storage.get('applicationType') == 'WebApp') {
-            appApi.launchWeb(this.uri);
-            appApi.setVisibility('ResidentApp', false);
-          } else if (Storage.get('applicationType') == 'Lightning') {
-            appApi.launchLightning(this.uri);
-            appApi.setVisibility('ResidentApp', false);
-          } else if (Storage.get('applicationType') == 'Native') {
-            appApi.launchNative(this.uri);
-            appApi.setVisibility('ResidentApp', false);
+            this.appApi.launchCobalt("Cobalt", this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'WebApp' /*&& Storage.get('ipAddress')*/) {
+            this.appApi.launchWeb(this.uri)
+              .then(() => {
+                this.appApi.setVisibility('ResidentApp', false);
+                let path = location.pathname.split('index.html')[0]
+                let url = path.slice(-1) === '/' ? "static/overlayText/index.html" : "/static/overlayText/index.html"
+                let notification_url = location.origin + path + url
+                this.appApi.launchOverlay(notification_url, 'TextOverlay')
+                Registry.setTimeout(() => {
+                  this.appApi.deactivateResidentApp('TextOverlay')
+                  this.appApi.zorder('HtmlApp')
+                  this.appApi.setVisibility('HtmlApp', true)
+                }, 9000)
+              })
+          } else if (Storage.get('applicationType') == 'Lightning' && Storage.get('ipAddress')) {
+            this.appApi.launchLightning(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Native' && Storage.get('ipAddress')) {
+            this.appApi.launchNative(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
           } else if (Storage.get('applicationType') == 'Amazon') {
-            appApi.launchPremiumApp('Amazon');
-            Storage.set('launchSuspendedAmazon', false);
-            
+            console.log('Launching app')
+            fetch('http://127.0.0.1:9998/Service/Controller/')
+              .then(res => res.json())
+              .then(data => {
+                console.log(data)
+                data.plugins.forEach(element => {
+                  if (element.callsign === 'Amazon') {
+                    console.log('Opening Amazon')
+                    this.appApi.launchPremiumApp('Amazon');
+                    this.appApi.setVisibility('ResidentApp', false);
+                  }
+                });
+              })
+              .catch(err => {
+                console.log('Amazon not working')
+              })
+
           } else if (Storage.get('applicationType') == 'Netflix') {
-            let params = { applicationName: 'Netflix', state: 'running' };
-            if(Storage.get('Netflix') == 'stopped'){
-              appApi.configureApplication('Netflix', 'source_type=3').then(() => {
-                appApi.launchPremiumApp('Netflix');
-                Storage.set('launchSuspendedNetflix', false);
-                
-              }).catch((err) => {
-                console.log('Error while select Netflix, Err: ' + JSON.stringify(err));
-              });
-            }else{
-              appApi.confRunningApplication('Netflix', 'source_type=3');
-              appApi.launchPremiumApp('Netflix');
-              Storage.set('launchSuspendedNetflix', false);
-            
+            console.log('Launching app')
+            fetch('http://127.0.0.1:9998/Service/Controller/')
+              .then(res => res.json())
+              .then(data => {
+                data.plugins.forEach(element => {
+                  if (element.callsign === 'Netflix') {
+                    console.log('Opening Netflix')
+                    this.appApi.launchPremiumApp('Netflix');
+                    this.appApi.setVisibility('ResidentApp', false);
+                  }
+                });
+              })
+              .catch(err => {
+                console.log('Netflix not working')
+              })
+
+          } else {
+            if (this.uri === 'USB') {
+              this.usbApi.getMountedDevices().then(result => {
+                if (result.mounted.length === 1) {
+                  // this.fireAncestors('$goToUsb')
+                  Router.navigate('usb');
+                }
+              })
+
             }
           }
-        }
-        _handleKey(key) {
-
-          if ((key.keyCode == 77 || key.keyCode == 36 || key.keyCode == 158) && !key.ctrlKey) {
-            this._hdmicec2.performOTP()
-          }
-          var appApi = new AppApi();
-          return appApi.handleHotKey(key)
         }
       },
-        class MetroApps extends this {
-          _getFocused() {
-            if (this.tag('MetroApps').length) {
-              this.fireAncestors('$changeBackgroundImageOnFocus', this.tag('MetroApps').element.data.url)
-              return this.tag('MetroApps').element
-            }
+      class MetroApps extends this {
+        $enter() {
+          if (this.inputSelect && this.gracenote) {
+            this.scroll(-200)
+          } else {
+            this.scroll(-100)
           }
-          _handleUp() {
-            this._setState('AppList')
+          this.indexVal = 1
+        }
+        $exit() {
+          this.tag('Text2').text.fontStyle = 'normal'
+        }
+        _getFocused() {
+          this.tag('Text2').text.fontStyle = 'bold'
+          if (this.tag('MetroApps').length) {
+            return this.tag('MetroApps').element
           }
-          _handleRight() {
-            if (this.tag('MetroApps').length - 1 != this.tag('MetroApps').index) {
-              this.tag('MetroApps').setNext()
-              this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('MetroApps').element.data.url)
-              return this.tag('MetroApps').element
-            }
-          }
-          _handleLeft() {
-            if (0 != this.tag('MetroApps').index) {
-              this.tag('MetroApps').setPrevious()
-              this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('MetroApps').element.data.url)
-              return this.tag('MetroApps').element
-            } else {
-              this.reset()
-  
-            }
-          }
-          _handleDown() {
-            this._setState('TVShows')
-          }
+        }
+        _handleUp() {
+          this._setState('AppList')
+        }
         _handleDown() {
           this._setState('TVShows')
         }
+        _handleRight() {
+          if (this.tag('MetroApps').length - 1 != this.tag('MetroApps').index) {
+            this.tag('MetroApps').setNext()
+            return this.tag('MetroApps').element
+          }
+        }
+        _handleLeft() {
+          this.tag('Text2').text.fontStyle = 'normal'
+          if (0 != this.tag('MetroApps').index) {
+            this.tag('MetroApps').setPrevious()
+            return this.tag('MetroApps').element
+          } else {
+            Router.focusWidget('Menu')
+          }
+        }
         _handleEnter() {
-          var appApi = new AppApi();
-          var applicationType = this.tag('MetroApps').items[this.tag('MetroApps').index].data.applicationType;
+          let applicationType = this.tag('MetroApps').items[this.tag('MetroApps').index].data.applicationType;
           this.uri = this.tag('MetroApps').items[this.tag('MetroApps').index].data.uri;
-          
+
           applicationType = this.tag('MetroApps').items[this.tag('MetroApps').index].data.applicationType;
           Storage.set('applicationType', applicationType);
           this.uri = this.tag('MetroApps').items[this.tag('MetroApps').index].data.uri;
           if (Storage.get('applicationType') == 'Cobalt') {
-            appApi.launchCobalt("Cobalt");
-            //appApi.setVisibility('ResidentApp', false);
-          } else if (Storage.get('applicationType') == 'WebApp') {
-            appApi.launchWeb(this.uri);
-            appApi.setVisibility('ResidentApp', false);
-          } else if (Storage.get('applicationType') == 'Lightning') {
-            appApi.launchLightning(this.uri);
-            appApi.setVisibility('ResidentApp', false);
-          } else if (Storage.get('applicationType') == 'Native') {
-            appApi.launchNative(this.uri);
-            appApi.setVisibility('ResidentApp', false);
+            this.appApi.launchCobalt("Cobalt", this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'WebApp' /*&& Storage.get('ipAddress')*/) {
+            this.appApi.launchWeb(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Lightning' && Storage.get('ipAddress')) {
+            this.appApi.launchLightning(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Native' && Storage.get('ipAddress')) {
+            this.appApi.launchNative(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
           }
-        }
-        _handleKey(key) {
-
-          if ((key.keyCode == 77 || key.keyCode == 36 || key.keyCode == 158) && !key.ctrlKey) {
-            this._hdmicec2.performOTP()
-          }
-          var appApi = new AppApi();
-          return appApi.handleHotKey(key)
-          
         }
       },
       class TVShows extends this {
         $enter() {
-          this.fireAncestors('$scroll', -320)
+          this.indexVal = 2
+          if (this.inputSelect && this.gracenote) {
+            this.scroll(-600)
+          } else {
+            this.scroll(-400)
+          }
+        }
+        _handleUp() {
+          this.scroll(270)
+          this._setState('MetroApps')
         }
         _getFocused() {
+          this.tag('Text3').text.fontStyle = 'bold'
           if (this.tag('TVShows').length) {
-            this.fireAncestors('$changeBackgroundImageOnFocus', this.tag('TVShows').element.data.url)
-
             return this.tag('TVShows').element
           }
         }
         _handleRight() {
           if (this.tag('TVShows').length - 1 != this.tag('TVShows').index) {
             this.tag('TVShows').setNext()
-            this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('TVShows').element.data.url)
             return this.tag('TVShows').element
           }
         }
         _handleLeft() {
+          this.tag('Text3').text.fontStyle = 'normal'
           if (0 != this.tag('TVShows').index) {
             this.tag('TVShows').setPrevious()
-            this.fireAncestors('$changeBackgroundImageOnNonFocus', this.tag('TVShows').element.data.url)
             return this.tag('TVShows').element
+          } else {
+            Router.focusWidget('Menu')
+          }
+        }
+        _handleDown() {
+          // if (this.tag('UsbApps').length) {
+          this._setState("ShowcaseApps");
+          //}
+        }
+        _handleEnter() {
+          if (Storage.get('ipAddress')) {
+            //this.fireAncestors('$goToPlayer')
+            Router.navigate('player', {
+              url:this.tag('TVShows').element.data.playurl
+            });
+          }
+        }
+        $exit() {
+          this.tag('Text3').text.fontStyle = 'normal'
+        }
+      },
+
+      class ShowcaseApps extends this {
+        $enter() {
+          if (this.inputSelect && this.gracenote) {
+            this.scroll(-750)
+          } else {
+            this.scroll(-550)
+          }
+        }
+        $exit() {
+          this.tag('Text4').text.fontStyle = 'normal'
+        }
+        _getFocused() {
+          this.tag('Text4').text.fontStyle = 'bold'
+          if (this.tag('ShowcaseApps').length) {
+            return this.tag('ShowcaseApps').element
           }
         }
         _handleUp() {
-          this._setState('MetroApps')
+          this._setState('TVShows')
+        }
+
+        _handleRight() {
+          if (this.tag('ShowcaseApps').length - 1 != this.tag('MetroApps').index) {
+            this.tag('ShowcaseApps').setNext()
+            return this.tag('ShowcaseApps').element
+          }
+        }
+        _handleDown() {
+          if (this.tag('UsbApps').length) {
+            this._setState("UsbApps");
+          }
+        }
+        _handleLeft() {
+          this.tag('Text4').text.fontStyle = 'normal'
+          if (0 != this.tag('ShowcaseApps').index) {
+            this.tag('ShowcaseApps').setPrevious()
+            return this.tag('ShowcaseApps').element
+          } else {
+            Router.focusWidget('Menu')
+          }
         }
         _handleEnter() {
-          this.playuri = this.tag('TVShows').items[this.tag('TVShows').index].data.playurl;
-          this.fireAncestors('$goToPlayer', this.playuri)
-        }
-        _handleKey(key) {
-          if ((key.keyCode == 77 || key.keyCode == 36 || key.keyCode == 158) && !key.ctrlKey) {
-            this._hdmicec2.performOTP()
+          let applicationType = this.tag('ShowcaseApps').items[this.tag('ShowcaseApps').index].data.applicationType;
+          this.uri = this.tag('ShowcaseApps').items[this.tag('ShowcaseApps').index].data.uri;
+
+          applicationType = this.tag('ShowcaseApps').items[this.tag('ShowcaseApps').index].data.applicationType;
+          Storage.set('applicationType', applicationType);
+          this.uri = this.tag('ShowcaseApps').items[this.tag('ShowcaseApps').index].data.uri;
+          if (Storage.get('applicationType') == 'Cobalt') {
+            this.appApi.launchCobalt("Cobalt", this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'WebApp' /*&& Storage.get('ipAddress')*/) {
+            this.appApi.launchWeb(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Lightning' && Storage.get('ipAddress')) {
+            this.appApi.launchLightning(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Native' && Storage.get('ipAddress')) {
+            this.appApi.launchNative(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
           }
-          var appApi = new AppApi();
-          return appApi.handleHotKey(key)
-          
+        }
+      },
+
+      class UsbApps extends this {
+        $enter() {
+          if (this.inputSelect && this.gracenote) {
+            this.scroll(-1000)
+          } else {
+            this.scroll(-750)
+          }
         }
         $exit() {
-          this.fireAncestors('$scroll', 0)
+          this.tag('Text5').text.fontStyle = 'normal'
+        }
+        _getFocused() {
+          this.tag('Text5').text.fontStyle = 'bold'
+          if (this.tag('UsbApps').length) {
+            return this.tag('UsbApps').element
+          }
+        }
+        _handleUp() {
+          this._setState('ShowcaseApps')
+        }
+
+        _handleRight() {
+          if (this.tag('UsbApps').length - 1 != this.tag('MetroApps').index) {
+            this.tag('UsbApps').setNext()
+            return this.tag('UsbApps').element
+          }
+        }
+        _handleLeft() {
+          this.tag('Text5').text.fontStyle = 'normal'
+          if (0 != this.tag('UsbApps').index) {
+            this.tag('UsbApps').setPrevious()
+            return this.tag('UsbApps').element
+          } else {
+            Router.focusWidget('Menu')
+          }
+        }
+        _handleEnter() {
+          let applicationType = this.tag('UsbApps').items[this.tag('UsbApps').index].data.applicationType;
+          this.uri = this.tag('UsbApps').items[this.tag('UsbApps').index].data.uri;
+
+          applicationType = this.tag('UsbApps').items[this.tag('UsbApps').index].data.applicationType;
+          Storage.set('applicationType', applicationType);
+          this.uri = this.tag('UsbApps').items[this.tag('UsbApps').index].data.uri;
+          if (Storage.get('applicationType') == 'Cobalt') {
+            this.appApi.launchCobalt("Cobalt", this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'WebApp' /*&& Storage.get('ipAddress')*/) {
+            this.appApi.launchWeb(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Lightning' && Storage.get('ipAddress')) {
+            this.appApi.launchLightning(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          } else if (Storage.get('applicationType') == 'Native' && Storage.get('ipAddress')) {
+            this.appApi.launchNative(this.uri);
+            this.appApi.setVisibility('ResidentApp', false);
+          }
         }
       },
       class RightArrow extends this {

@@ -23,11 +23,17 @@ import ThunderJS from 'ThunderJS'
 
 export default class BluetoothApi {
   constructor() {
-    console.log('Bluetooth constructor')
     this._events = new Map()
     this._devices = []
     this._pairedDevices = []
     this._connectedDevices = []
+    this.btStatus = false
+    const config = {
+      host: '127.0.0.1',
+      port: 9998,
+      default: 1,
+    }
+    this._thunder = ThunderJS(config)
   }
 
   /**
@@ -35,54 +41,60 @@ export default class BluetoothApi {
    */
   activate() {
     return new Promise((resolve, reject) => {
-      const config = {
-        host: '127.0.0.1',
-        port: 9998,
-        default: 1,
-      }
-      this._thunder = ThunderJS(config)
       this.callsign = 'org.rdk.Bluetooth'
       this._thunder
         .call('Controller', 'activate', { callsign: this.callsign })
         .then(result => {
-          console.log('Bluetooth activated', result)
+          this.btStatus = true
           this._thunder.on(this.callsign, 'onDiscoveredDevice', notification => {
-            console.log('onDiscoveredDevice ' + JSON.stringify(notification))
-            this.getDiscoveredDevices().then(() => {
-              this._events.get('onDiscoveredDevice')(notification)
-            })
+            // this.getDiscoveredDevices().then(() => {
+              if (this._events.has('onDiscoveredDevice')) {
+                this._events.get('onDiscoveredDevice')(notification)
+              }
+            // })
           })
           this._thunder.on(this.callsign, 'onStatusChanged', notification => {
-            console.log('onStatusChanged ' + notification.newStatus)
             if (notification.newStatus === 'PAIRING_CHANGE') {
-              this.getPairedDevices().then(() => {
-                this._events.get('onPairingChange')(notification)
-              })
+              this.getPairedDevices()
             } else if (notification.newStatus === 'CONNECTION_CHANGE') {
               this.getConnectedDevices().then(() => {
-                this._events.get('onConnectionChange')(notification)
+                if (this._events.has('onConnectionChange')) {
+                  this._events.get('onConnectionChange')(notification)
+                }
               })
             } else if (notification.newStatus === 'DISCOVERY_STARTED') {
               this.getConnectedDevices().then(() => {
-                this._events.get('onDiscoveryStarted')()
+                if (this._events.has('onDiscoveryStarted')) {
+                  this._events.get('onDiscoveryStarted')()
+                }
               })
             } else if (notification.newStatus === 'DISCOVERY_COMPLETED') {
               this.getConnectedDevices().then(() => {
-                this._events.get('onDiscoveryCompleted')()
+                if (this._events.has('onDiscoveryCompleted')) {
+                  this._events.get('onDiscoveryCompleted')()
+                }
               })
             }
           })
           this._thunder.on(this.callsign, 'onPairingRequest', notification => {
-            console.log('onPairingRequest ' + JSON.stringify(notification))
-            this._events.get('onPairingRequest')(notification)
+            if (this._events.has('onPairingRequest')) {
+              this._events.get('onPairingRequest')(notification)
+            }
           })
           this._thunder.on(this.callsign, 'onRequestFailed', notification => {
-            console.log('onRequestFailed ' + JSON.stringify(notification))
-            this._events.get('onRequestFailed')(notification)
+            if (this._events.has('onRequestFailed')) {
+              this._events.get('onRequestFailed')(notification)
+            }
           })
           this._thunder.on(this.callsign, 'onConnectionRequest', notification => {
-            console.log('onConnectionRequest ' + JSON.stringify(notification))
-            this._events.get('onConnectionRequest')(notification)
+            if (this._events.has('onConnectionRequest')) {
+              this._events.get('onConnectionRequest')(notification)
+            }
+          })
+          this._thunder.on(this.callsign, 'onDeviceLost', notification => {
+            if (this._events.has('onDeviceLost')) {
+              this._events.get('onDeviceLost')(notification)
+            }
           })
           resolve('Blutooth activated')
         })
@@ -108,7 +120,6 @@ export default class BluetoothApi {
    */
   deactivate() {
     this._events = new Map()
-    this._thunder = null
   }
 
   /**
@@ -119,12 +130,11 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'disable')
         .then(result => {
-          console.log(JSON.stringify(result))
+          this.btStatus = false
           resolve(result)
         })
         .catch(err => {
-          console.error(`Can't disable : ${err}`)
-          reject()
+          console.error(`Can't disable : ${JSON.stringify(err)}`)
         })
     })
   }
@@ -137,11 +147,11 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'enable')
         .then(result => {
-          console.log(JSON.stringify(result))
           resolve(result)
+          this.btStatus = true
         })
         .catch(err => {
-          console.error(`Can't enable : ${err}`)
+          console.error(`Can't enable : ${JSON.stringify(err)}`)
           reject()
         })
     })
@@ -155,10 +165,12 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'startScan', {
           timeout: '10',
-          profile: 'KEYBOARD,MOUSE,JOYSTICK',
+          profile: `KEYBOARD,
+                    MOUSE,
+                    JOYSTICK,
+                    HUMAN INTERFACE DEVICE`,
         })
         .then(result => {
-          console.log('scanning : ' + result.success)
           if (result.success) resolve()
           else reject()
         })
@@ -168,6 +180,41 @@ export default class BluetoothApi {
         })
     })
   }
+  
+  /**
+   * Function to start scanning for the Bluetooth devices.
+   */
+  startScanAudioOut() {
+    return new Promise((resolve, reject) => {
+      this._thunder
+        .call('org.rdk.Bluetooth', 'startScan', {
+          timeout: '10',
+          profile: `LOUDSPEAKER,
+                    HEADPHONES,
+                    WEARABLE HEADSET,
+                    HIFI AUDIO DEVICE`,
+        })
+        .then(result => {
+          if (result.success) resolve()
+          else reject()
+        })
+        .catch(err => {
+          console.error('Error', err)
+          reject()
+        })
+    })
+  }
+  
+  isAudioOutDev(deviceType) {
+    if(deviceType === 'LOUDSPEAKER' ||
+      deviceType === 'HEADPHONES' ||
+      deviceType === 'WEARABLE HEADSET' ||
+      deviceType === 'HIFI AUDIO DEVICE') {
+       return true;
+    }
+
+    return false;
+  }
 
   /**
    * Function to stop scanning for the Bluetooth devices.
@@ -175,9 +222,8 @@ export default class BluetoothApi {
   stopScan() {
     return new Promise((resolve, reject) => {
       this._thunder
-        .call('org.rdk.Bluetooth', 'startScan', {})
+        .call('org.rdk.Bluetooth', 'stopScan', {})
         .then(result => {
-          console.log('stopped scanning : ' + result.success)
           if (result.success) resolve()
           else reject()
         })
@@ -196,13 +242,11 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'getDiscoveredDevices')
         .then(result => {
-          console.log(JSON.stringify(result))
           this._devices = result.discoveredDevices
           resolve(result.discoveredDevices)
         })
         .catch(err => {
-          console.error(`Can't get discovered devices : ${err}`)
-          reject()
+          console.error(`Can't get discovered devices : ${JSON.stringify(err)}`)
         })
     })
   }
@@ -218,13 +262,12 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'getPairedDevices')
         .then(result => {
-          console.log(JSON.stringify(result))
           this._pairedDevices = result.pairedDevices
           resolve(result.pairedDevices)
         })
         .catch(err => {
           console.error(`Can't get paired devices : ${err}`)
-          reject()
+          reject(false)
         })
     })
   }
@@ -240,7 +283,6 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'getConnectedDevices')
         .then(result => {
-          console.log(JSON.stringify(result))
           this._connectedDevices = result.connectedDevices
           resolve(result.connectedDevices)
         })
@@ -263,15 +305,13 @@ export default class BluetoothApi {
    */
   connect(deviceID, deviceType) {
     return new Promise((resolve, reject) => {
-      console.log(deviceID)
       this._thunder
         .call('org.rdk.Bluetooth', 'connect', {
           deviceID: deviceID,
           deviceType: deviceType,
-          profile: deviceType,
+          connectedProfile: deviceType,
         })
         .then(result => {
-          console.log('connected : ' + result.success)
           resolve(result.success)
         })
         .catch(err => {
@@ -287,7 +327,6 @@ export default class BluetoothApi {
    *@param {string} deviceType Device type of the Bluetooth client.
    */
   disconnect(deviceID, deviceType) {
-    console.log(deviceID)
     return new Promise((resolve, reject) => {
       this._thunder
         .call('org.rdk.Bluetooth', 'disconnect', {
@@ -295,7 +334,6 @@ export default class BluetoothApi {
           deviceType: deviceType,
         })
         .then(result => {
-          console.log('disconnected : ' + result.success)
           if (result.success) resolve(true)
           else reject()
         })
@@ -315,13 +353,12 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'unpair', { deviceID: deviceId })
         .then(result => {
-          console.log('unpaired : ' + result.success)
-          if (result.success) resolve()
-          else reject()
+          if (result.success) resolve(result.success)
+          else resolve(false)
         })
         .catch(err => {
           console.error('unpair failed', err)
-          reject()
+          resolve(false)
         })
     })
   }
@@ -335,9 +372,8 @@ export default class BluetoothApi {
       this._thunder
         .call('org.rdk.Bluetooth', 'pair', { deviceID: deviceId })
         .then(result => {
-          console.log('paired : ' + result.success)
-          if (result.success) resolve()
-          else reject()
+          if (result.success) resolve(result)
+          else reject(result)
         })
         .catch(err => {
           console.error('Error on pairing', err)
@@ -361,7 +397,6 @@ export default class BluetoothApi {
           responseValue: responseValue,
         })
         .then(result => {
-          console.log('responded to event : ' + result.success)
           if (result.success) resolve()
           else reject()
         })
@@ -382,4 +417,37 @@ export default class BluetoothApi {
       })
     })
   }
+
+  setAudioStream(deviceID) {
+
+    return new Promise((resolve, reject) => {
+      this._thunder
+        .call('org.rdk.Bluetooth', 'setAudioStream', { "deviceID": deviceID, "audioStreamName": "AUXILIARY" })
+        .then(result => {
+
+          // console.log(JSON.stringify(result))
+          this._connectedDevices = result.connectedDevices
+          resolve(result.connectedDevices)
+        })
+        .catch(err => {
+          console.error(`Can't get connected devices : ${err}`)
+          reject()
+        })
+    })
+  }
+  
+  checkPluginStatus() {
+    return new Promise((resolve, reject) => {
+      this._thunder.call('Controller.1', 'status@' + 'org.rdk.Bluetooth')
+        .then(res => {
+            console.log(res)
+            resolve(res)
+        })
+        .catch(err => {
+          console.error('get plugin status failed err = ', +  err)
+          reject()
+        })
+    })
+  }
+
 }

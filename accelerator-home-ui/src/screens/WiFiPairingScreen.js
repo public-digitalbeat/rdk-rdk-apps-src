@@ -16,59 +16,139 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Lightning, Utils } from '@lightningjs/sdk'
-import { COLORS } from '../colors/Colors'
-import SettingsItem from './../items/SettingsItem'
-import WiFiPasswordScreen from './wifipasswordscreen/WiFiPasswordScreen'
-import ThunderJS from 'ThunderJS'
-const config = {
-  host: '127.0.0.1',
-  port: 9998,
-  default: 1,
-}
+import { Lightning, Router } from '@lightningjs/sdk'
+import { CONFIG } from '../Config/Config'
+import ConfirmAndCancel from '../items/ConfirmAndCancel'
+import PasswordSwitch from './PasswordSwitch'
+import { Keyboard } from '../ui-components/index'
+import { KEYBOARD_FORMATS } from '../ui-components/components/Keyboard'
+import WifiApi from '../api/WifiApi'
 
-var thunder = ThunderJS(config)
+export default class WifiPairingScreen extends Lightning.Component {
 
-export default class BluetoothPairingScreen extends Lightning.Component {
+  pageTransition() {
+    return 'left'
+  }
+
+  
   static _template() {
     return {
+      w: 1920,
+      h: 1080,
+      rect: true,
+      color: 0xff000000,
       PairingScreen: {
-        x: 0,
-        y: 0,
-        w: 1920 / 3,
-        h: 1080,
-        rect: true,
-        color: 0xff364651,
+        Title: {
+          x: 960,
+          y: 95,
+          mountX: 0.5,
+          zIndex: 2,
+          text: { text: '', fontSize: 40, textColor: CONFIG.theme.hex },
+        },
+        RectangleWithColor: {
+          x: 180, y: 164, w: 1515, h: 2, rect: true, color: 0xFFFFFFFF, zIndex: 2
+        },
+        PasswordLabel: {
+          x: 180,
+          y: 240,
+          w: 300,
+          h: 75,
+          zIndex: 2,
+          text: { text: 'Password: ', fontSize: 25, fontFace: CONFIG.language.font, textColor: 0xffffffff, textAlign: 'left' },
+        },
+        Pwd: {
+          x: 437,
+          y: 240,
+          zIndex: 2,
+          text: {
+            text: '',
+            fontSize: 25,
+            fontFace: CONFIG.language.font,
+            textColor: 0xffffffff,
+            wordWrapWidth: 1000,
+            wordWrap: false,
+            textOverflow: 'ellipsis',
+          },
+        },
+        PasswordBox: {
+          x: 417,
+          y: 208,
+          zIndex: 2,
+          texture: Lightning.Tools.getRoundRect(1279, 88, 0, 3, 0xffffffff, false)
+        },
+
+        PasswrdSwitch: {
+          h: 45,
+          w: 66.9,
+          x: 1656,
+          y: 255,
+          zIndex: 2,
+          type: PasswordSwitch,
+          mount: 0.5,
+        },
+        ShowPassword: {
+          x: 1398,
+          y: 240,
+          w: 300,
+          h: 75,
+          zIndex: 2,
+          text: { text: 'Show Password', fontSize: 25, fontFace: CONFIG.language.font, textColor: 0xffffffff, textAlign: 'left' },
+        },
+        List: {
+          x: 417,
+          y: 331,
+          type: Lightning.components.ListComponent,
+          w: 1080,
+          h: 400,
+          itemSize: 28,
+          horizontal: true,
+          invertDirection: false,
+          roll: true,
+          zIndex: 2
+        },
+        RectangleWithColor2: {
+          x: 180, y: 451, w: 1515, h: 2, rect: true, color: 0xFFFFFFFF, zIndex: 2
+        },
+        KeyBoard: {
+          y: 501,
+          x: 420,
+          type: Keyboard,
+          visible: true,
+          zIndex: 2,
+          formats: KEYBOARD_FORMATS.qwerty
+        }
       },
-      Title: {
-        x: 20,
-        y: 100,
-        text: { text: '', fontSize: 36, textColor: COLORS.titleColor },
-      },
-      List: {
-        x: 20,
-        y: 200,
-        type: Lightning.components.ListComponent,
-        w: 1920 / 3,
-        h: 400,
-        itemSize: 65,
-        horizontal: false,
-        invertDirection: true,
-        roll: true,
-      },
-      Password: {
-        type: WiFiPasswordScreen,
-        x: 1920 / 3 / 2,
-        y: 350,
-        mountX: 0.5,
-        w: 428,
-        h: 56,
-        alpha: 0,
-      },
+
+
     }
   }
-  
-  set item(item) {
+
+  _updateText(txt) {
+    this.tag("Pwd").text.text = txt;
+  }
+  _handleBack() {
+    Router.back()
+  }
+  _handleMenu() {
+    this._handleBack()
+  }
+
+  /**
+   * @param {{ item: Wifi Response Object; }} args
+   */
+  set params(args) {
+    if (args.wifiItem) {
+      this.item(args.wifiItem)
+    } else {
+      Router.navigate('settings/network/interface/wifi')
+    }
+
+  }
+
+  item(item) {
+    this.star = "";
+    this.passwd = "";
+    this.tag("Pwd").text.text = ""
     this.tag('Title').text = item.ssid
     var options = []
     this._item = item
@@ -81,51 +161,124 @@ export default class BluetoothPairingScreen extends Lightning.Component {
     this.tag('List').items = options.map((item, index) => {
       return {
         ref: item,
-        w: 1920 / 3,
-        h: 65,
-        type: SettingsItem,
+        x: index === 0 ? 0 : 325 * index,
+        w: 325,
+        h: 85,
+        type: ConfirmAndCancel,
         item: item,
       }
     })
+    if(!this._item.security && !item.connected)
+    {
+      this._wifi.connect(this._item, '').then(() => {}).catch(err => {
+        console.log('Not able to connect to wifi', JSON.stringify(err));
+      });
+      Router.navigate('settings/network/interface/wifi')
+    } else {
+      this._setState('Pair');
+    }
+  }
+
+  _focus() {
+    this.hidePasswd = true;
     this._setState('Pair')
   }
-  getPaired() {
-    return new Promise((resolve, reject) => {
-      thunder
-        .call('org.rdk.Wifi', 'getPairedSSID', {})
-        .then(result => {
-          resolve(result)
-        })
-        .catch(err => {
-          console.error(`Can't get paired: ${err}`)
-          reject(err)
-        })
-    })
+  _unfocus() {
+
   }
+
+  _init() {
+    this.star = "";
+    this.passwd = "";
+    this.isOn = false;
+    this._wifi = new WifiApi()
+  }
+
+  pressEnter(option) {
+    if (option === 'Cancel') {
+      Router.back()
+    } else if (option === 'Connect') {
+      if (this._item) {
+        console.log('trying to connect wifi')
+        this._wifi
+          .connect(this._item, '')
+          .then(() => { })
+          .catch(err => {
+            console.log('Not able to connect to wifi', JSON.stringify(err))
+          })
+      }
+      Router.back()
+    } else if (option === 'Disconnect') {
+      this._wifi.disconnect().then(() => {
+        Router.back()
+      })
+    }
+  }
+
+  // startConnect(password) {
+  //   this._wifi.connect(this._item, password).then(() => {
+  //     Router.back()
+  //   })
+
+  // }
+  startConnect(password) {
+    this._wifi.connect(this._item, password).then(() => {
+      this._wifi.saveSSID(this._item.ssid, password, this._item.security).then((response) => {
+        if(response.result===0){
+          // console.log(response);
+          // Router.back()
+        }
+        else if(response.result!==0){
+          this._wifi.clearSSID().then((response) => {
+            // console.log(response)
+            // Router.back()
+          })
+        }
+      })
+      Router.back()
+    })
+
+  }
+
+
   static _states() {
     return [
       class Password extends this {
         $enter() {
-          this.tag('Password').alpha = 1
+          this.shifter = false;
+          this.capsLock = false;
         }
+
         _getFocused() {
-          return this.tag('Password')
+          return this.tag("KeyBoard")
         }
-        $password(password) {
-          this.fireAncestors('$startConnect', password)
+
+        $onSoftKey({ key }) {
+          if (key === 'Done') {
+            this.startConnect(this.passwd)
+          } else if (key === 'Clear') {
+            this.passwd = this.passwd.substring(0, this.passwd.length - 1);
+            this.star = this.star.substring(0, this.star.length - 1);
+            this._updateText(this.hidePasswd ? this.star : this.passwd)
+          } else if (key === '#@!' || key === 'abc' || key === 'áöû' || key === 'shift') {
+            console.log('no saving')
+          } else if (key === 'Space') {
+            this.star += '\u25CF'
+            this.passwd += ' '
+            this._updateText(this.hidePasswd ? this.star : this.passwd)
+          } else if (key === 'Delete') {
+            this.star = ''
+            this.passwd = ''
+            this._updateText(this.hidePasswd ? this.star : this.passwd)
+          } else {
+            this.star += '\u25CF';
+            this.passwd += key
+            this._updateText(this.hidePasswd ? this.star : this.passwd)
+          }
+
         }
-        $exit() {
-          this.tag('Password').alpha = 0
-        }
-        _handleKey(event) {
-          if (
-            event.keyCode == 27 ||
-            event.keyCode == 77 ||
-            event.keyCode == 49 ||
-            event.keyCode == 158
-          ) {
-            this._setState('Pair')
-          } else return false
+        _handleUp() {
+          this._setState("Pair")
         }
       },
       class Pair extends this {
@@ -133,29 +286,58 @@ export default class BluetoothPairingScreen extends Lightning.Component {
         _getFocused() {
           return this.tag('List').element
         }
-        _handleDown() {
+        _handleRight() {
           this.tag('List').setNext()
         }
-        _handleUp() {
+        _handleLeft() {
           this.tag('List').setPrevious()
         }
+        _handleUp() {
+          this._setState("PasswordSwitchState");
+        }
+        _handleDown() {
+          this._setState("Password");
+        }
         _handleEnter() {
-          if (this.tag('List').element.ref == 'Connect' && this._item.security != '0') {
-            this.getPaired().then(result => {
-              console.log("connect to already paired: "+ result.ssid + " and " + this._item.ssid )
-              if (result.ssid == this._item.ssid) {
-                this.fireAncestors('$pressEnter', this.tag('List').element.ref)
-              }
-              else {
-                this._setState('Password')
-              }
-            })
-            //this._setState('Password')
+          if (this.tag('List').element.ref == 'Connect' && this._item.security != 0) {
+            if (this.star === '') {
+              this._setState('Password')
+            } else {
+              this.startConnect(this.passwd)
+            }
           } else {
-            this.fireAncestors('$pressEnter', this.tag('List').element.ref)
+            this.pressEnter(this.tag('List').element.ref)
           }
         }
+
       },
+      class PasswordSwitchState extends this{
+        $enter() {
+          this.tag("PasswordBox").texture = Lightning.Tools.getRoundRect(1279, 88, 0, 3, CONFIG.theme.hex, false)
+        }
+        _handleDown() {
+          this._setState("Pair");
+        }
+        _getFocused() {
+          return this.tag('PasswrdSwitch');
+        }
+
+        $handleEnter(bool) {
+          if (bool) {
+            this._updateText(this.passwd)
+            this.hidePasswd = false;
+          }
+          else {
+            this._updateText(this.star);
+            this.hidePasswd = true;
+          }
+          this.isOn = bool;
+        }
+
+        $exit() {
+          this.tag("PasswordBox").texture = Lightning.Tools.getRoundRect(1279, 88, 0, 3, 0xffffffff, false)
+        }
+      }
     ]
   }
 }

@@ -17,6 +17,7 @@
  * limitations under the License.
  **/
 import { Lightning, Utils } from '@lightningjs/sdk'
+import { CONFIG } from '../Config/Config';
 
 /**
  * Class to render items in main view.
@@ -30,41 +31,41 @@ export default class ListItem extends Lightning.Component {
       Item: {
         Shadow: {
           alpha: 0,
-          x: -45,
-          y: -40,
-          color: 0x66000000,
-          texture: lng.Tools.getShadowRect(375, 420, 0, 10, 20),
         },
-        x: 0,
-        y: 18,
-        Image: {},
+        y: 20,
+        Image: {
+        },
         Info: {},
       },
     }
   }
 
   _init() {
+    this.tag('Shadow').patch({
+      color: CONFIG.theme.hex,
+      rect: true,
+      h: this.h + this.bar * 2,
+      w: this.w,
+      x: this.x,
+      y: this.y - this.bar
+    })
     if (this.data.url.startsWith('/images')) {
       this.tag('Image').patch({
         rtt: true,
+        x: this.x,
+        y: this.y,
         w: this.w,
         h: this.h,
-        shader: {
-          type: lng.shaders.RoundedRectangle,
-          radius: 10
-        },
         src: Utils.asset(this.data.url),
         scale: this.unfocus,
       });
     } else {
       this.tag('Image').patch({
         rtt: true,
+        x: this.x,
+        y: this.y,
         w: this.w,
         h: this.h,
-        shader: {
-          type: lng.shaders.RoundedRectangle,
-          radius: 10
-        },
         src: this.data.url,
       });
     }
@@ -72,70 +73,26 @@ export default class ListItem extends Lightning.Component {
     /* Used static data for develpment purpose ,
     it wil replaced with Dynamic data once implimetation is completed.*/
     this.tag('Info').patch({
-      rect: true,
-      color: 0xff141F31,
-      x: this.x,
-      y: this.y + this.h + 30,
+      x: this.x - 20,
+      y: this.y + this.h + 10,
       w: this.w,
       h: 140,
       alpha: 0,
       PlayIcon: {
-        x: this.x + 20,
-        y: this.y + 20,
-        texture: Lightning.Tools.getSvgTexture(Utils.asset('images/player/play_icon_new.png'), 50, 50),
         Label: {
-          x: this.x + 65,
+          x: this.idx === 0 ? this.x + 20 : this.x,
           y: this.y + 10,
           text: {
-            fontFace: 'MS-Regular',
+            fontFace: CONFIG.language.font,
             text: this.data.displayName,
-            fontSize: 25,
-            maxLines: 2,
-            wordWrapWidth: 150
+            fontSize: 35,
+            maxLines: 1,
+            wordWrapWidth: this.w
           },
         }
       },
-      IMDb: {
-        x: this.x + 25,
-        y: this.y + 90,
-        texture: Lightning.Tools.getSvgTexture(Utils.asset('images/player/IMDb.png'), 45, 30),
-        Rating: {
-          x: this.x + 65,
-          y: this.y,
-          text: {
-            fontFace: 'MS-Light',
-            text: '8.8/10',
-            fontSize: 20,
-            maxLines: 2,
-            wordWrapWidth: 150
-          },
-        },
-        Ua: {
-          text: {
-            fontFace: 'MS-Light',
-            text: '16+',
-            fontSize: 18
-          },
-          x: this.x + 135,
-          y: this.y,
-          RoundRectangle: {
-            zIndex: 2,
-            texture: lng.Tools.getRoundRect(30, 20, 4, 3, 0xffff00ff, false, 0xff00ffff),
-          },
-        },
-        Duration: {
-          x: this.x + 190,
-          y: this.y,
-          text: {
-            fontFace: 'MS-Light',
-            text: '2h 30m',
-            fontSize: 20,
-            maxLines: 2,
-            wordWrapWidth: 150
-          },
-        }
-      }
     })
+
   }
 
   /**
@@ -144,33 +101,20 @@ export default class ListItem extends Lightning.Component {
   _focus() {
     this.tag('Image').patch({
       x: this.x,
+      y: this.y,
       w: this.w,
       h: this.h,
+      zIndex: 1,
       scale: this.focus,
-      shader: {
-        type: lng.shaders.RoundRectangle,
-        radius: 0
-      }
     })
-
     this.tag('Info').alpha = 1
-    this.tag('Info').patch({
-      smooth: {
-        x: this.x,
-        w: this.w,
-        h: 140,
-        scale: this.focus
-      }
-    })
     this.tag('Item').patch({
-      smooth: {
-        zIndex: 1,
-        y: this.y - 65,
-      }
+      zIndex: 2,
     })
     this.tag('Shadow').patch({
       smooth: {
-        alpha: 1
+        scale: [this.focus, { timingFunction: 'ease', duration: 0.7 }],
+        alpha: 1,
       }
     });
   }
@@ -180,26 +124,19 @@ export default class ListItem extends Lightning.Component {
    */
   _unfocus() {
     this.tag('Image').patch({
-      x: 0,
-      y: 0,
       w: this.w,
       h: this.h,
       scale: this.unfocus,
-      shader: {
-        type: lng.shaders.RoundedRectangle,
-        radius: 10
-      }
+      zIndex: 0
     })
     this.tag('Item').patch({
-      smooth: {
-        zIndex: 0,
-        y: this.y + 20
-      }
+      zIndex: 0,
     })
     this.tag('Info').alpha = 0
     this.tag('Shadow').patch({
       smooth: {
-        alpha: 0
+        alpha: 0,
+        scale: [this.unfocus, { timingFunction: 'ease', duration: 0.7 }]
       }
     });
   }

@@ -16,15 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
+
 import ThunderJS from 'ThunderJS';
-//import AppApi from './AppApi.js';
-//var appApi = new AppApi();
 /**
  * Class for Xcast thunder plugin apis.
  */
-
 export default class XcastApi {
   constructor() {
+    const config = {
+      host: '127.0.0.1',
+      port: 9998,
+      default: 1,
+    };
+    this._thunder = ThunderJS(config);
     console.log('Xcast constructor');
     this._events = new Map();
   }
@@ -34,42 +38,16 @@ export default class XcastApi {
    */
   activate() {
     return new Promise((resolve, reject) => {
-      const config = {
-        host: '127.0.0.1',
-        port: 9998,
-        default: 1,
-      };
-      this._thunder = ThunderJS(config);
       this.callsign = 'org.rdk.Xcast';
       this._thunder
         .call('Controller', 'activate', { callsign: this.callsign })
         .then(result => {
-          console.log(result);
-          console.log('Xcast activation success');
+          console.log('Xcast activation success ' + result);
           this._thunder
-            .call('org.rdk.Xcast', 'setEnabled', {enabled: true})
+            .call('org.rdk.Xcast', 'setEnabled', { enabled: true })
             .then(result => {
               if (result.success) {
                 console.log('Xcast enabled');
-                this._thunder.call('org.rdk.RDKShell.1', 'getState', {}).then(result => {
-                  console.log(JSON.stringify(result))
-                  let state = result.state
-                  
-                 for (var i = 0; i < state.length; i++) {      
-                    if (state[i].callsign == 'Netflix') {
-                      let params = { applicationName: 'Netflix', state: 'stopped' };
-                      if (state[i].state == 'resumed') {
-                        params.state = 'running'
-                      } else if (state[i].state == 'suspended') {
-                        params.state = 'suspended'
-                      } else params.state = 'stopped'
-                    
-                      //console.log('Notifying back to xcast' + JSON.stringify(params))
-                      //appApi.setAppState(params)
-                      
-                    }
-                  }
-                })
                 this._thunder.on(this.callsign, 'onApplicationLaunchRequest', notification => {
                   console.log('onApplicationLaunchRequest ' + JSON.stringify(notification));
                   if (this._events.has('onApplicationLaunchRequest')) {
@@ -95,16 +73,9 @@ export default class XcastApi {
                   }
                 });
                 this._thunder.on(this.callsign, 'onApplicationStateRequest', notification => {
-                  console.log('onApplicationStateRequest ' + JSON.stringify(notification));
+                  // console.log('onApplicationStateRequest ' + JSON.stringify(notification));
                   if (this._events.has('onApplicationStateRequest')) {
                     this._events.get('onApplicationStateRequest')(notification);
-                  }
-                  
-                });
-                this._thunder.on(this.callsign, 'onActivationChanged', notification => {
-                  console.log('onActivationChanged ' + JSON.stringify(notification));
-                  if (this._events.has('onActivationChanged')) {
-                    this._events.get('onActivationChanged')(notification);
                   }
                 });
                 resolve(true);
@@ -124,6 +95,19 @@ export default class XcastApi {
     });
   }
 
+  getEnabled() {
+    return new Promise((resolve, reject) => {
+      this._thunder.call('org.rdk.Xcast', 'getEnabled')
+        .then(res => {
+          resolve(res)
+        })
+        .catch(err => {
+          console.log('Xdial error', err)
+          reject(err)
+        })
+    })
+  }
+
   /**
    *
    * @param {string} eventId
@@ -138,8 +122,15 @@ export default class XcastApi {
    * Function to deactivate the Xcast plugin.
    */
   deactivate() {
-    this._events = new Map();
-    this._thunder = null;
+    return new Promise((resolve, reject) => {
+      this._thunder.call('org.rdk.Xcast', 'setEnabled', { enabled: false })
+        .then(res => {
+          resolve(res.success)
+        })
+        .catch(err => {
+          console.log('Failed to close Xcast', err)
+        })
+    })
   }
 
   /**
@@ -147,9 +138,8 @@ export default class XcastApi {
    */
   onApplicationStateChanged(params) {
     return new Promise((resolve, reject) => {
-      console.log('Notifying back' + JSON.stringify(params))
-      this._thunder.call('org.rdk.Xcast', 'onApplicationStateChanged', params).then(result => {
-        console.log(JSON.stringify(result));
+      console.log('Notifying back');
+      this._thunder.call('org.rdk.Xcast.1', 'onApplicationStateChanged', params).then(result => {
         resolve(result);
       });
     });

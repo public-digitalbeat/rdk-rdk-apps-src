@@ -17,18 +17,47 @@
  * limitations under the License.
  **/
 import { Lightning, Utils } from '@lightningjs/sdk'
-import SettingsItem from './SettingsItem'
 import { COLORS } from '../colors/Colors'
+import { CONFIG } from '../Config/Config'
 
-export default class WiFiItem extends SettingsItem {
+export default class WiFiItem extends Lightning.Component {
+
+  _construct() {
+    this.Lock = Utils.asset('/images/settings/Lock.png')
+    this.WiFi1 = Utils.asset('/images/settings/WiFi1.png')
+    this.WiFi2 = Utils.asset('/images/settings/WiFi2.png')
+    this.WiFi3 = Utils.asset('/images/settings/WiFi3.png')
+    this.WiFi4 = Utils.asset('/images/settings/WiFi4.png')
+    this.Tick = Utils.asset('/images/settings/Tick.png')
+  }
+
+  _init() {
+    this.tag('Item.Tick').on('txError', () => {
+      const url = 'http://127.0.0.1:50050/lxresui/static/images/settings/Tick.png'
+      this.tag('Item.Tick').src = url
+    })
+  }
   static _template() {
     return {
-      Item: {
-        w: 1920 / 3 - 70,
-        h: 65,
+      TopLine: {
+        y: 0,
+        mountY: 0.5,
+        w: 1600,
+        h: 3,
         rect: true,
-        color: 0x00000000,
-        shader: { type: Lightning.shaders.RoundedRectangle, radius: 9 },
+        color: 0xFFFFFFFF
+      },
+      Item: {
+        w: 1600,
+        h: 90,
+      },
+      BottomLine: {
+        y: 90,
+        mountY: 0.5,
+        w: 1600,
+        h: 3,
+        rect: true,
+        color: 0xFFFFFFFF
       },
     }
   }
@@ -37,36 +66,60 @@ export default class WiFiItem extends SettingsItem {
    * Function to set contents of an item in the Bluetooth screen.
    */
   set item(item) {
+
     this._item = item
     this.status = item.connected ? 'Connected' : 'Not Connected'
+
+    var wifiicon = "";
+    if (item.signalStrength >= -50) {
+      wifiicon = this.WiFi4
+    }
+    else if (item.signalStrength >= -60) {
+      wifiicon = this.WiFi3
+    }
+    else if (item.signalStrength >= -67) {
+      wifiicon = this.WiFi2
+    }
+    else {
+      wifiicon = this.WiFi1
+    }
+
+
+
     this.tag('Item').patch({
-      Left: {
+      Tick: {
         x: 10,
-        y: 32.5,
+        y: 45,
         mountY: 0.5,
-        text: { text: item.ssid, fontSize: 25, textColor: COLORS.textColor, fontFace: 'MS-Regular', },
+        h: 32.5,
+        w: 32.5,
+        src: this.Tick,
+        //texture: Lightning.Tools.getSvgTexture(this.Tick, 32.5, 32.5),
+        color: 0xffffffff,
+        visible: item.connected ? true : false
+      },
+      Left: {
+        x: 40,
+        y: 45,
+        mountY: 0.5,
+        text: { text: item.ssid, fontSize: 25, textColor: COLORS.textColor, fontFace: CONFIG.language.font, },
       },
 
       Right: {
-        x: 1920 / 3 - 80,
+        x: 1560,
         mountX: 1,
-        y: 32.5,
+        y: 45,
         mountY: 0.5,
         flex: { direction: 'row' },
         Lock: {
-          color: 0xff000000,
-          flexItem: { marginLeft: 10 },
-          texture: Lightning.Tools.getSvgTexture(Utils.asset('images/wifi-lock.png'), 32.5, 32.5),
+          color: 0xffffffff,
+          texture: Lightning.Tools.getSvgTexture(this.Lock, 32.5, 32.5),
+          alpha: 1
         },
         Icon: {
-          color: 0xff000000,
-          flexItem: { marginLeft: 10 },
-          texture: Lightning.Tools.getSvgTexture(Utils.asset('images/wifi-icon.png'), 32.5, 32.5),
-        },
-        Info: {
-          color: 0xff000000,
-          flexItem: { marginLeft: 10 },
-          texture: Lightning.Tools.getSvgTexture(Utils.asset('images/info.png'), 32.5, 32.5),
+          color: 0xffffffff,
+          flexItem: { marginLeft: 15 },
+          texture: Lightning.Tools.getSvgTexture(wifiicon, 32.5, 32.5),
         },
       },
     })
@@ -78,10 +131,23 @@ export default class WiFiItem extends SettingsItem {
   }
 
   _focus() {
-    this.tag('Item').color = COLORS.hightlightColor
+    this.tag("Item").color = COLORS.hightlightColor
+    this.tag('TopLine').color = CONFIG.theme.hex
+    this.tag('BottomLine').color = CONFIG.theme.hex
+    this.patch({
+      zIndex: 2
+    })
+    this.tag('TopLine').h = 6
+    this.tag('BottomLine').h = 6
   }
 
   _unfocus() {
-    this.tag('Item').color = 0x00000000
+    this.tag('TopLine').color = 0xFFFFFFFF
+    this.tag('BottomLine').color = 0xFFFFFFFF
+    this.patch({
+      zIndex: 1
+    })
+    this.tag('TopLine').h = 3
+    this.tag('BottomLine').h = 3
   }
 }

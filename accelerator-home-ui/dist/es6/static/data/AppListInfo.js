@@ -20,23 +20,29 @@
  * Class which contains data for app listings.
  */
 export var appListInfo = [
+  /*{
+    displayName: 'USB',
+    applicationType: '',
+    uri: 'USB',
+    url: '/images/usb/USB_Featured_Item.jpg',
+  }, */ //the first item should be usb
   {
     displayName: 'Netflix',
     applicationType: 'Netflix',
     uri: '',
-    url: '/images/apps/netflix.png',
-  },
+    url: '/images/apps/netflix.png',//replace with online url
+  },  
   {
-    displayName: 'Prime Video',
+    displayName: 'Prime video',
     applicationType: 'Amazon',
     uri: '',
-    url: '/images/apps/prime.png',
+    url: '/images/apps/prime.png',//replace with online url
   },
   {
     displayName: 'Youtube',
     applicationType: 'Cobalt',
     uri: 'https://www.youtube.com/tv',
-    url: '/images/apps/youtube.png',
+    url: '/images/apps/youtube.png',//replace with online url
   },
   {
     displayName: 'Asperitas IPTV',
@@ -54,26 +60,12 @@ export var appListInfo = [
     displayName: 'IPTVApp',
     applicationType: 'WebApp',
     uri: 'http://127.0.0.1:50050/iptvapp/main.html',
-    url: '/images/apps/iptv.png',
-   }, 
-   {
-    displayName: 'Lightning Benchmark',
-    applicationType: 'Lightning',
-    uri: 'https://strike.lightningjs.io/es6/#home',
-    url: '/images/apps/strike.png',
+    url: '/images/apps/iptv.png'
   },
   {
     displayName: 'Xumo',
     applicationType: 'WebApp',
-    uri: 'https://x1box-app.xumo.com/3.0.70/index.html',
-    url: '/images/apps/xumo.png',
-  },
-  {
-    displayName: 'Bluetooth Audio',
-    applicationType: 'Lightning',
-    uri: 'https://rdkwiki.com/rdk-apps/BluetoothAudio/index.html',
-    url: '/images/metroApps/Test-01.png',
-  },
-
+    uri: 'https://x1box-app.xumo.com/index.html',
+    url: '/images/apps/xumo.png',//replace with online url
+  }
 ]
-

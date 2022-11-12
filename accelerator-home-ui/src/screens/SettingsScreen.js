@@ -1,4 +1,3 @@
-
 /**
  * If not stated otherwise in this file or this component's LICENSE
  * file the following copyright and licenses apply:
@@ -17,362 +16,365 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Lightning, Utils, Router, Storage } from '@lightningjs/sdk'
-import BluetoothScreen from './BluetoothScreen'
-import WiFiScreen from './WifiScreen'
-import DisplayScreen from './DisplayScreen'
-import SystemInfoScreen from './SystemInfoScreen'
-import SideSettingScreen from './SideSettingScreen'
-import AudioScreen from './AudioScreen'
-import UsbFolders from './UsbScreens/UsbFolders'
-import NetworkApi from '../api/NetworkApi'
-import AppApi from '../api/AppApi.js'
+import { Lightning, Utils, Language, Router } from '@lightningjs/sdk'
+import { COLORS } from '../colors/Colors'
+import SettingsMainItem from '../items/SettingsMainItem'
+import { CONFIG } from '../Config/Config'
+import DTVApi from '../api/DTVApi';
 
 /**
  * Class for settings screen.
  */
-
 export default class SettingsScreen extends Lightning.Component {
+
+  _onChanged() {
+    this.widgets.menu.updateTopPanelText(Language.translate('Settings'));
+  }
+
+  pageTransition() {
+    return 'left'
+  }
+
   static _template() {
     return {
-      Background: {
-        w: 1920,
-        h: 1080,
-        src: Utils.asset('images/tvShows/background_new.jpg'),
-      },
-      SettingsTopPanel: {
-        x: 0,
-        y: 0,
-        w: 1920,
-        h: 171,
-        Back: {
-          x: 81,
-          y: 100,
-          mountY: 0.5,
-          src: Utils.asset('/images/settings/Back_icon.png'),
-          w: 70,
-          h: 70,
-        },
-        IconTitle: {
-          x: 200,
-          y: 78,
-          text: { text: 'Settings', fontSize: 40, fontFace: 'MS-Regular', },
-        },
-        
-        Border: {
-          x: 81,
-          y: 171,
-          mountY: 0.5,
-          RoundRectangle: {
-            zIndex: 2,
-            texture: lng.Tools.getRoundRect(1761, 0, 0, 3, 0xffffffff, true, 0xffffffff),
+      rect: true,
+      color: 0xff000000,
+      w: 1920,
+      h: 1080,
+      SettingsScreenContents: {
+        x: 200,
+        y: 275,
+        NetworkConfiguration: {
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Network Configuration'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
           },
-          alpha: 0.4
-        }
-      },
-
-      SideMenubar: {
-        type: SideSettingScreen,
-        rect: true,
-        color: 0xff364651,
-        visible: true
-      },
-      WiFiScreen: {
-        type: WiFiScreen,
-        visible: true,
-      },
-      BluetoothScreen: {
-        type: BluetoothScreen,
-        visible: true,
-      },
-      UsbFolders: {
-        type: UsbFolders,
-        visible: true,
-      },
-      DisplayScreen: {
-        type: DisplayScreen,
-        visible: true,
-      },
-      SystemInfoScreen: {
-        type: SystemInfoScreen,
-        visible: true,
-      },
-      AudioScreen: {
-        type: AudioScreen,
-        visible: true,
-      },
-      HBorder: {
-        x: 760,
-        y: 220,
-        mountY: 0.5,
-        RoundRectangle: {
-          zIndex: 2,
-          texture: lng.Tools.getRoundRect(0, 809, 0, 3, 0xffffffff, true, 0xffffffff),
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
         },
-        alpha: 0.4
-      }
+        Bluetooth: {
+          y: 90,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Pair Remote Control'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+        Video: {
+          y: 180,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Video'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+        Audio: {
+          y: 270,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Audio'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+        OtherSettings: {
+          y: 360,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Other Settings'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+        DTVSettings: {
+          alpha:0.3,
+          y: 450,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Live TV'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+        Netflix: {
+          y: 540,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Netflix'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          Button: {
+            h: 45,
+            w: 45,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Arrow.png'),
+          },
+        },
+      },
     }
   }
 
   _init() {
-    
+    this._setState('NetworkConfiguration')
   }
-  _active() {
-    this._setState('SideMenubar')
-    this.tag('SideMenubar').index = this.sideMenubarIndex
+  _focus() {
+    this._setState(this.state)
   }
-
-  _captureKey(key) {
-    var appApi = new AppApi();
-    return appApi.handleHotKey(key)
-  }
-
-  set screen(screen) {
-    this._setState(screen)
-  }
-
-  set id(id) {
-    this.sideMenubarIndex = parseInt(id)
+  _firstActive() {
+    //this.dtvApi = new DTVApi();
+    this.dtvPlugin = false; //plugin availability
+    /*this.dtvApi.activate().then((res) => {
+      // if (res){
+        this.dtvPlugin=true;
+        this.tag("DTVSettings").alpha = 1;
+      // }
+    })*/
   }
 
-  set params(args) {
-    if (args.animation != undefined) {
-      args.animation.start()
-    }
+  _handleBack() {
+    Router.navigate('menu')
   }
 
-  /**
-   * Fireancestor to set the state to side panel.
-   * @param {index} index index value of side panel item.
-   */
-  $goToSettingsTopPanel() {
-    this._setState('Back')
-  }
-
-  $goToBluetoothScreen(index) {
-    this._setState('BluetoothScreen')
-  }
-  $goToWiFiScreen(index) {
-    this._setState('WiFiScreen')
-  }
-  $goToUsbFolders(index) {
-    this._setState('UsbFolders')
-  }
-  $goToDisplayScreen(index) {
-    this._setState('DisplayScreen')
-  }
-  $goToSystemInfoScreen(index) {
-    this._setState('SystemInfoScreen')
-  }
-  $goToAudioScreen(index) {
-    this._setState('AudioScreen')
-  }  
-  $goToSideMenubar(index) {
-    this.tag('SideMenubar').index = index
-    this._setState('SideMenubar')
-  }
- 
-  $setVisibleSetting(index) {
-    if (index == 0) {
-      this.tag('BluetoothScreen').alpha = 1
-      this.tag('WiFiScreen').alpha = 0
-      this.tag('UsbFolders').alpha = 0
-      this.tag('DisplayScreen').alpha = 0
-      this.tag('SystemInfoScreen').alpha = 0
-      this.tag('AudioScreen').alpha = 0
-    }
-    else if (index == 1) {
-      this.tag('BluetoothScreen').alpha = 0
-      this.tag('WiFiScreen').alpha = 1
-      this.tag('UsbFolders').alpha = 0
-      this.tag('DisplayScreen').alpha = 0
-      this.tag('SystemInfoScreen').alpha = 0
-      this.tag('AudioScreen').alpha = 0
-    } else if (index == 2) {
-      this.tag('BluetoothScreen').alpha = 0
-      this.tag('WiFiScreen').alpha = 0
-      this.tag('UsbFolders').alpha = 1
-      this.tag('DisplayScreen').alpha = 0
-      this.tag('SystemInfoScreen').alpha = 0
-      this.tag('AudioScreen').alpha = 0
-    }
-    else if (index ==3) {
-      this.tag('BluetoothScreen').alpha = 0
-      this.tag('WiFiScreen').alpha = 0
-      this.tag('UsbFolders').alpha = 0
-      this.tag('DisplayScreen').alpha = 1
-      this.tag('SystemInfoScreen').alpha = 0
-      this.tag('AudioScreen').alpha = 0
-    }
-    else if (index ==4) {
-      this.tag('BluetoothScreen').alpha = 0
-      this.tag('WiFiScreen').alpha = 0
-      this.tag('UsbFolders').alpha = 0
-      this.tag('DisplayScreen').alpha = 0
-      this.tag('SystemInfoScreen').alpha = 1
-      this.tag('AudioScreen').alpha = 0
-    }
-    else if (index ==5) {
-      this.tag('BluetoothScreen').alpha = 0
-      this.tag('WiFiScreen').alpha = 0
-      this.tag('UsbFolders').alpha = 0
-      this.tag('DisplayScreen').alpha = 0
-      this.tag('SystemInfoScreen').alpha = 0
-      this.tag('AudioScreen').alpha = 1
-    }
+  _handleMenu() {
+    this._handleBack()
   }
 
   static _states() {
     return [
-      class SideMenubar extends this{
-        _getFocused() {
-          return this.tag('SideMenubar')
-        }
-      },
-      class Back extends this{
+      class NetworkConfiguration extends this{
         $enter() {
-          this.tag('Back').patch({
-            src: Utils.asset('/images/settings/back-arrow-small.png'),
-          })
+          this.tag('NetworkConfiguration')._focus()
+        }
+        $exit() {
+          this.tag('NetworkConfiguration')._unfocus()
         }
         _handleDown() {
-          this.tag('Back').patch({
-            src: Utils.asset('/images/settings/Back_icon.png'),
-          })
-          this._setState('SideMenubar')
+          this._setState('Bluetooth')
         }
-        _handleKey(key) {
-          if (key.keyCode == 13) {
-            this.tag('Back').patch({
-              src: Utils.asset('/images/settings/Back_icon.png'),
-            })
-            Router.navigate('/home', false)
+        _handleEnter() {
+          Router.navigate('settings/network')
+        }
+      },
+      class Bluetooth extends this {
+        $enter() {
+          this.tag('Bluetooth')._focus()
+        }
+        $exit() {
+          this.tag('Bluetooth')._unfocus()
+        }
+        _handleUp() {
+          this._setState('NetworkConfiguration')
+        }
+        _handleDown() {
+          this._setState('Video')
+        }
+        _handleLeft() {
+        }
+        _handleEnter() {
+          Router.navigate('settings/bluetooth')
+        }
+      },
+
+      class Video extends this{
+        $enter() {
+          this.tag('Video')._focus()
+        }
+        $exit() {
+          this.tag('Video')._unfocus()
+        }
+        _handleUp() {
+          this._setState('Bluetooth')
+        }
+        _handleDown() {
+          this._setState('Audio')
+        }
+        _handleEnter() {
+          Router.navigate('settings/video')
+        }
+
+      },
+
+      class Audio extends this{
+        $enter() {
+          this.tag('Audio')._focus()
+        }
+        $exit() {
+          this.tag('Audio')._unfocus()
+        }
+        _handleUp() {
+          this._setState('Video')
+        }
+        _handleEnter() {
+          Router.navigate('settings/audio')
+        }
+        _handleDown() {
+          this._setState('OtherSettings')
+        }
+      },
+
+      class OtherSettings extends this{
+        $enter() {
+          this.tag('OtherSettings')._focus()
+        }
+        $exit() {
+          this.tag('OtherSettings')._unfocus()
+        }
+        _handleUp() {
+          this._setState('Audio')
+        }
+        _handleEnter() {
+          Router.navigate('settings/other')
+        }
+        _handleDown() {
+          if(this.dtvPlugin){
+            this._setState('DTVSettings')
+          }
+          else {
+            this._setState('Netflix')
           }
         }
       },
-      class BluetoothScreen extends this {
+      class DTVSettings extends this{
         $enter() {
-          this.tag('BluetoothScreen').visible = true
-        }
-        _getFocused() {
-          return this.tag('BluetoothScreen')
+          this.tag('DTVSettings')._focus()
         }
         $exit() {
-          // this.tag('BluetoothScreen').visible = false
+          this.tag('DTVSettings')._unfocus()
         }
-        _handleKey(key) {
-          const config = {
-            host: '127.0.0.1',
-            port: 9998,
-            default: 1,
+        _handleUp() {
+          this._setState('OtherSettings')
+        }
+        _handleDown() {
+          this._setState('Netflix')
+        }
+        _handleEnter() {
+          if(this.dtvPlugin){
+            Router.navigate('settings/livetv')
           }
-          if (
-            (Storage.get('applicationType') == '') &&
-            (key.keyCode == 77 ||
-              key.keyCode == 49 ||
-              key.keyCode == 36 ||
-              key.keyCode == 158 ||
-              key.keyCode == 27 ||
-              (key.keyCode == 73 && key.ctrlKey == true))
-          ) {
-            this._appAnimation = this.animation({
-              duration: 0.5,
-              repeat: 0,
-              stopMethod: 'immediate',
-              actions: [
-                { p: 'alpha', v: { 0: 0.5, 1: 1 } },
-                { p: 'y', v: { 0: 0, 1: 1080 } },
-              ],
-            })
-            this._appAnimation.start()
-            this._appAnimation.on('finish', p => {
-              Router.navigate('home')
-            })
-          } else return false;
+          // dtvApi.activate().then(res =>{
+          //   this.tag('DTVSettings.Title').text.text = 'DTV Settings: Activtion'+ res
+          // })
         }
       },
-      class UsbFolders extends this {
+      class Netflix extends this{
         $enter() {
-          this.tag('UsbFolders').visible = true
-        }
-        _getFocused() {
-          return this.tag('UsbFolders')
+          this.tag('Netflix')._focus()
         }
         $exit() {
-          // this.tag('UsbFolders').visible = false
+          this.tag('Netflix')._unfocus()
         }
-      },
-      class DisplayScreen extends this {
-        $enter() {
-          this.tag('DisplayScreen').visible = true
-        }
-        _getFocused() {
-          return this.tag('DisplayScreen')
-        }
-        $exit() {
-          // this.tag('UsbFolders').visible = false
-        }
-      },
-      class SystemInfoScreen extends this {
-        $enter() {
-          this.tag('SystemInfoScreen').visible = true
-        }
-        _getFocused() {
-          return this.tag('SystemInfoScreen')
-        }
-        $exit() {
-          // this.tag('UsbFolders').visible = false
-        }
-      },
-      class AudioScreen extends this {
-        $enter() {
-          this.tag('AudioScreen').visible = true
-        }
-        _getFocused() {
-          return this.tag('AudioScreen')
-        }
-        $exit() {
-        }
-      },
-      class WiFiScreen extends this {
-        $enter() {
-          this.tag('WiFiScreen').visible = true
-        }
-        _getFocused() {
-          return this.tag('WiFiScreen')
-        }
-        $exit() {
-          // this.tag('WiFiScreen').visible = false
-        }
-        _handleKey(key) {
-          const config = {
-            host: '127.0.0.1',
-            port: 9998,
-            default: 1,
+        _handleUp() {
+          if(this.dtvPlugin){
+            this._setState('DTVSettings')
           }
-          if (
-            (Storage.get('applicationType') == '') &&
-            (key.keyCode == 77 ||
-              key.keyCode == 49 ||
-              key.keyCode == 36 ||
-              key.keyCode == 158 ||
-              key.keyCode == 27 ||
-              (key.keyCode == 73 && key.ctrlKey == true))
-          ) {
-            this._appAnimation = this.animation({
-              duration: 0.3,
-              repeat: 0,
-              stopMethod: 'immediate',
-              actions: [
-                { p: 'alpha', v: { 0: 0.5, 1: 1 } },
-                { p: 'y', v: { 0: 0, 1: 1080 } },
-              ],
-            })
-            this._appAnimation.start()
-            this._appAnimation.on('finish', p => {
-              Router.navigate('home')
-            })
-          } else return false;
+          else {
+            this._setState('OtherSettings')
+          }
+        }
+        _handleEnter() {
+          Router.navigate('settings/netflix')
         }
       },
     ]

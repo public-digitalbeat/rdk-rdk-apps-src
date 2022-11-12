@@ -25,15 +25,7 @@ export var settingsInfo = [
     url: '/images/settings/bluetooth.jpg',
   },
   {
-    displayName: 'Network',
-    url: '/images/settings/wifi.jpg',
-  },
-  {
-    displayName: 'System',
-    url: '/images/settings/wifi.jpg',
-  },
-  {
-    displayName: 'Netflix',
+    displayName: 'Wi-Fi',
     url: '/images/settings/wifi.jpg',
   },
 ]

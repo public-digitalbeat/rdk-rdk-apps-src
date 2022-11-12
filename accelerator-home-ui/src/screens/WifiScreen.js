@@ -16,202 +16,229 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Lightning, Utils } from '@lightningjs/sdk'
+import { Language, Lightning, Router, Utils } from '@lightningjs/sdk'
 import NetworkApi from './../api/NetworkApi'
 import WiFiItem from '../items/WiFiItem'
+import SettingsMainItem from '../items/SettingsMainItem'
 import WiFiApi from './../api/WifiApi'
-import WiFiPairingScreen from './WiFiPairingScreen'
-import ThunderJS from 'ThunderJS'
 import { COLORS } from './../colors/Colors'
+import { CONFIG } from '../Config/Config'
 
 /**
- * Class for WiFi screen.
- */
+* Class for WiFi screen.
+*/
 export default class WiFiScreen extends Lightning.Component {
+
+
+  pageTransition() {
+    return 'left'
+  }
+
   static _template() {
     return {
-      Title: {
-        x: 900,
-        y: 310,
-        text: {
-          text: 'Wired. Unplug ethernet for wireless',
-          textColor: COLORS.titleColor,
-          fontSize: 30,
-        },
-      },
-      Networks: {
-        x: 900,
-        y: 450,
-        flex: { direction: 'column' },
-        PairedNetworks: {
-          flexItem: { margin: 20 },
-          w: 1920 / 3,
-          h: 30,
+      rect: true,
+      color: 0xff000000,
+      w: 1920,
+      h: 1080,
+      WifiContents: {
+        x: 200,
+        y: 275,
+        Switch: {
+          type: SettingsMainItem,
           Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
             text: {
-              text: 'My Network',
+              text: Language.translate('WiFi On/Off'),
               textColor: COLORS.titleColor,
-              fontSize: 30,
-            },
-          },
-          List: {
-            x: 0,
-            y: 65,
-            type: Lightning.components.ListComponent,
-            w: 1920 / 3,
-            itemSize: 65,
-            horizontal: false,
-            invertDirection: true,
-            roll: true,
-          },
-        },
-        AvailableNetworks: {
-          flexItem: { margin: 20, marginTop: 30 },
-          w: 1920 / 3,
-          h: 30,
-          Title: {
-            text: {
-              text: 'Other Networks',
-              textColor: COLORS.titleColor,
-              fontSize: 30,
-            },
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
           },
           Loader: {
-            x: 250,
-            y: -10,
-            w: 50,
-            h: 50,
-            color: 0xff000000,
-            src: Utils.asset('images/loader.png'),
             visible: false,
+            h: 45,
+            w: 45,
+            x: 1500,
+            // x: 320,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/Loading.gif'),
           },
-          List: {
-            x: 0,
-            y: 65,
-            w: 1920 / 3,
-            h: 100,
-            type: Lightning.components.ListComponent,
-            itemSize: 65,
-            horizontal: false,
-            invertDirection: true,
-            roll: true,
+          Button: {
+            h: 45,
+            w: 67,
+            x: 1600,
+            mountX: 1,
+            y: 45,
+            mountY: 0.5,
+            src: Utils.asset('images/settings/ToggleOffWhite.png'),
           },
         },
-        visible: false,
-      },
-      PairingScreen: {
-        x: 1920 - 1920 / 3,
-        y: 0,
-        w: 1920 / 3,
-        h: 1080,
-        visible: false,
-        zIndex: 2,
-        type: WiFiPairingScreen,
-      },
-      IpAddressBg: {
-        rect: true,
-        x: 1870,
-        y: 1060,
-        w: 256,
-        h: 30,
-        mount: 1,
-        color: 0xbb0078ac,
-      },
-      IpAddress: {
-        x: 1828,
-        y: 1058,
-        mount: 1,
-        text: {
-          text: 'IP:NA',
-          textColor: 0xffffffff,
-          fontSize: 22,
+        Networks: {
+          y: 180,
+          flex: { direction: 'column' },
+          PairedNetworks: {
+            flexItem: { margin: 0 },
+            List: {
+              type: Lightning.components.ListComponent,
+              w: 1920 - 300,
+              itemSize: 90,
+              horizontal: false,
+              invertDirection: true,
+              roll: true,
+              rollMax: 900,
+              itemScrollOffset: -4,
+            },
+          },
+          AvailableNetworks: {
+            flexItem: { margin: 0 },
+            List: {
+              w: 1920 - 300,
+              type: Lightning.components.ListComponent,
+              itemSize: 90,
+              horizontal: false,
+              invertDirection: true,
+              roll: true,
+              rollMax: 900,
+              itemScrollOffset: -4,
+            },
+          },
+          visible: false,
+        },
+        JoinAnotherNetwork: {
+          y: 90,
+          type: SettingsMainItem,
+          Title: {
+            x: 10,
+            y: 45,
+            mountY: 0.5,
+            text: {
+              text: Language.translate('Join Another Network'),
+              textColor: COLORS.titleColor,
+              fontFace: CONFIG.language.font,
+              fontSize: 25,
+            }
+          },
+          visible: false,
         },
       },
     }
+
   }
+
   _active() {
     this._setState('Switch')
-    // this._setState('Button')
   }
 
   _focus() {
-    new NetworkApi().getIP().then(ip => {
-      this.tag('IpAddress').text.text = 'IP:' + ip
-    })
+    this._setState('Switch')
+    this._enable()
   }
 
-  
-  _init() {
-    this.loadingAnimation = this.tag('Networks.AvailableNetworks.Loader').animation({
-      duration: 1,
+
+  _firstEnable() {
+
+    this.wifiLoading = this.tag('Switch.Loader').animation({
+      duration: 3,
       repeat: -1,
       stopMethod: 'immediate',
       stopDelay: 0.2,
       actions: [{ p: 'rotation', v: { sm: 0, 0: 0, 1: Math.PI * 2 } }],
     })
-    this.loadingAnimation.play()
+
+    this.onError = {
+      0: 'SSID_CHANGED - The SSID of the network changed',
+      1: 'CONNECTION_LOST - The connection to the network was lost',
+      2: 'CONNECTION_FAILED - The connection failed for an unknown reason',
+      3: 'CONNECTION_INTERRUPTED - The connection was interrupted',
+      4: 'INVALID_CREDENTIALS - The connection failed due to invalid credentials',
+      5: 'NO_SSID - The SSID does not exist',
+      6: 'UNKNOWN - Any other error.'
+    }
     this._wifi = new WiFiApi()
     this._network = new NetworkApi()
     this.wifiStatus = false
     this._wifiIcon = true
-    this._forget = false
     this._activateWiFi()
     this._setState('Switch')
-   
-                    
+    if (this.wiFiStatus) {
+      this.tag('Networks').visible = true
+      this.tag('JoinAnotherNetwork').visible = true
+    }
     this._pairedNetworks = this.tag('Networks.PairedNetworks')
     this._availableNetworks = this.tag('Networks.AvailableNetworks')
     this._network.activate().then(result => {
       if (result) {
+        this.wifiStatus = true
         this._network.registerEvent('onIPAddressStatusChanged', notification => {
-          this._network.getDefaultInterface().then(def_interface =>  {
-            
-            //default interface is not available sometimes when this notification gets called
-            if (def_interface == '') {
-              def_interface = notification.interface
-            }
-            if (def_interface == notification.interface) {
-              if (notification.status == 'ACQUIRED') {
-                if (notification.hasOwnProperty('ip4Address')) {
-                  this.tag('IpAddress').text.text = 'IP:' + notification.ip4Address;
+          console.log(JSON.stringify(notification))
+          if (notification.status == 'LOST') {
+            if (notification.interface === 'WIFI') {
+              this._wifi.setInterface('ETHERNET', true).then(res => {
+                if (res.success) {
+                  this._wifi.setDefaultInterface('ETHERNET', true)
                 }
-              }else if (notification.status == 'LOST') {
-                
-                  this.tag('IpAddress').text.text = 'IP:NA '
-              }
+              })
             }
-            })  
-          
+          }
         })
         this._network.registerEvent('onDefaultInterfaceChanged', notification => {
-          console.log("ondefaultinterfacechanged: new:" + notification.newInterfaceName + " old:" + notification.oldInterfaceName)
-          if (notification.newInterfaceName != 'ETHERNET') {
-            this._wifi.setEnabled(true).then(result => {
+          if (notification.newInterfaceName === 'ETHERNET') {
+            this._wifi.setInterface('ETHERNET', true).then(result => {
               if (result.success) {
-                this.wifiStatus = true
-                this.tag('Networks').visible = true
-                this.tag('Title').text.text = 'Wireless'
-                this._wifi.discoverSSIDs()
-                this.tag('Networks.AvailableNetworks.Loader').visible = true
-                
+                this._wifi.setDefaultInterface('ETHERNET', true)
               }
             })
-          } else {
+          } if (
+            notification.newInterfaceName == 'ETHERNET' ||
+            notification.oldInterfaceName == 'WIFI'
+          ) {
             this._wifi.disconnect()
             this.wifiStatus = false
             this.tag('Networks').visible = false
-            this.tag('Title').text.text = 'Wired. Unplug ethernet for wireless'
+            this.tag('JoinAnotherNetwork').visible = false
+            this.tag('Switch.Loader').visible = false
+            this.wifiLoading.stop()
+            this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOffWhite.png')
             this._setState('Switch')
+            this._wifi.setInterface('ETHERNET', true).then(result => {
+              if (result.success) {
+                this._wifi.setDefaultInterface('ETHERNET', true).then(result1 => {
+                  if (result1.success) {
+                    console.log('set default success', result1)
+                  }
+                })
+              }
+            })
+          }
+          if (
+            notification.newInterfaceName == '' &&
+            notification.oldInterfaceName == 'WIFI'
+          ) {
+            this._wifi.setInterface('ETHERNET', true).then(result => {
+              if (result.success) {
+                this._wifi.setDefaultInterface('ETHERNET', true).then(result1 => {
+                  if (result1.success) {
+                    console.log('set default success', result1)
+                  }
+                })
+              }
+            })
           }
         })
-        this._network.getIP().then(ip => {
-          if (ip == '') {
-            ip = 'NA'
+        this._network.registerEvent('onConnectionStatusChanged', notification => {
+          if (notification.interface === 'ETHERNET' && notification.status === 'CONNECTED') {
+            this._wifi.setInterface('ETHERNET', true).then(res => {
+              if (res.success) {
+                this._wifi.setDefaultInterface('ETHERNET', true)
+              }
+            })
           }
-          this.tag('IpAddress').text.text = 'IP:' + ip
         })
       }
-     
     })
   }
 
@@ -219,36 +246,19 @@ export default class WiFiScreen extends Lightning.Component {
    * Function to be executed when the Wi-Fi screen is enabled.
    */
   _enable() {
-    this._wifi.getDefaultInterface().then(result => {
-      if ((result.interface == 'WIFI') || (result.interface == '')) {
-        this.wifiStatus = true
-        //this._wifi.discoverSSIDs()
-        this.tag('Networks.AvailableNetworks.Loader').visible = true
-        this.tag('Title').text.text = 'Wireless'
-        this.tag('Networks').visible = true
-      }
-    })
-    /*if (this.wifiStatus) {
+    if (this.wifiStatus) {
       this._wifi.discoverSSIDs()
-      this.tag('Networks.AvailableNetworks.Loader').visible = true
-      this.tag('Title').text.text = 'Wireless'
-     
-    }*/
-    this.scanTimer = setInterval(() => {
-      if (this.wifiStatus) {
-        this._wifi.discoverSSIDs()
-        this.tag('Networks.AvailableNetworks.Loader').visible = true
-        
-      }
-    }, 8000)
+    }
   }
 
   /**
    * Function to be executed when the Wi-Fi screen is disabled.
    */
   _disable() {
-    clearInterval(this.scanTimer)
+    this._wifi.stopScan()
   }
+
+
 
   /**
    * Function to render list of Wi-Fi networks.
@@ -260,14 +270,14 @@ export default class WiFiScreen extends Lightning.Component {
       } else {
         this._pairedList = []
       }
-      this._pairedNetworks.h = this._pairedList.length * 65 + 30
-      this._pairedNetworks.tag('List').h = this._pairedList.length * 65
+      this._pairedNetworks.h = this._pairedList.length * 90
+      this._pairedNetworks.tag('List').h = this._pairedList.length * 90
       this._pairedNetworks.tag('List').items = this._pairedList.map((item, index) => {
         item.connected = true
         return {
           ref: 'Paired' + index,
-          w: 1920 / 3,
-          h: 65,
+          w: 1920 - 300,
+          h: 90,
           type: WiFiItem,
           item: item,
         }
@@ -279,68 +289,62 @@ export default class WiFiScreen extends Lightning.Component {
           return false
         } else return device
       })
-      this._availableNetworks.h = this._otherList.length * 65 + 30
-      this._availableNetworks.tag('List').h = this._otherList.length * 65
-
-      if (this._otherList.length < this._availableNetworks.tag('List').length) {
-        if(this._availableNetworks.tag('List').y < 65){
-          let index = 0;
-          while (this._availableNetworks.tag('List').y < 65) {
-            index = this._availableNetworks.tag('List').y/(-65);
-            this._availableNetworks.tag('List').getElement(index).visible = true;
-            this._availableNetworks.tag('List').y += 65;
-          }
-          this._availableNetworks.tag('List').setIndex(0);
-        }
-      }
-
+      this._availableNetworks.h = this._otherList.length * 90
+      this._availableNetworks.tag('List').h = this._otherList.length * 90
       this._availableNetworks.tag('List').items = this._otherList.map((item, index) => {
         item.connected = false
         return {
           ref: 'Other' + index,
-          w: 1920 / 3,
-          h: 65,
+          w: 1620,
+          h: 90,
           type: WiFiItem,
           item: item,
         }
       })
     })
   }
+  _handleBack() {
+    Router.navigate('settings/network/interface')
+  }
+  _handleMenu() {
+    this._handleBack()
+  }
+  _onChanged() {
+    this.widgets.menu.updateTopPanelText(Language.translate('Settings  Network Configuration  Network Interface  WiFi'))
+  }
 
   static _states() {
     return [
       class Switch extends this {
         $enter() {
-          this.tag('Title').text.textColor = COLORS.hightlightColor
+          if (this.wifiStatus === true) {
+            this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOnOrange.png')
+            this.tag('Switch.Button').scaleX = 1;
+          }
+          this.tag('Switch')._focus()
         }
         $exit() {
-          this.tag('Title').text.textColor = COLORS.titleColor
+          this.tag('Switch')._unfocus()
         }
         _handleDown() {
-          if (this.wifiStatus) {
-            if (this._pairedNetworks.tag('List').length > 0) {
-              this._setState('PairedDevices')
-            } else if (this._availableNetworks.tag('List').length > 0) {
-              this._setState('AvailableDevices')
-            }
+          if (this.wifiStatus === true) {
+            this._setState('JoinAnotherNetwork')
           }
         }
-
-        _handleLeft() {
-          
-          console.log('handle left Wifi')
-          this.tag('Title').text.textColor = COLORS.titleColor
-          this.fireAncestors('$goToSideMenubar', 1)
-        }
-        _getFocused() {
-          this.tag('Title').text.textColor = COLORS.hightlightColor
-        }
         _handleEnter() {
-          //this.switch()
+          this.switch()
         }
       },
       class PairedDevices extends this {
-        $enter() { }
+        $enter() {
+          if (this.wifiStatus === true) {
+            this.tag('Switch.Loader').visible = false
+            this.wifiLoading.stop()
+            this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOffWhite.png')
+            this.tag('Switch.Button').scaleX = -1;
+          }
+
+        }
         _getFocused() {
           return this._pairedNetworks.tag('List').element
         }
@@ -351,13 +355,19 @@ export default class WiFiScreen extends Lightning.Component {
           this._navigate('MyDevices', 'up')
         }
         _handleEnter() {
-          this.tag('PairingScreen').visible = true
-          this.tag('PairingScreen').item = this._pairedNetworks.tag('List').element._item
-          this._setState('PairingScreen')
+          Router.navigate('settings/network/interface/wifi/connect', { wifiItem: this._pairedNetworks.tag('List').element._item })
         }
       },
       class AvailableDevices extends this {
-        $enter() { }
+        $enter() {
+          if (this.wifiStatus === true) {
+            this.tag('Switch.Loader').visible = false
+            this.wifiLoading.stop()
+            this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOffWhite.png');
+            this.tag('Switch.Button').scaleX = -1;
+          }
+
+        }
         _getFocused() {
           return this._availableNetworks.tag('List').element
         }
@@ -368,52 +378,32 @@ export default class WiFiScreen extends Lightning.Component {
           this._navigate('AvailableDevices', 'up')
         }
         _handleEnter() {
-          this.tag('PairingScreen').visible = true
-          this.tag('PairingScreen').item = this._availableNetworks.tag('List').element._item
-          this._setState('PairingScreen')
+          Router.navigate('settings/network/interface/wifi/connect', { wifiItem: this._availableNetworks.tag('List').element._item })
         }
       },
-      class PairingScreen extends this {
+      class JoinAnotherNetwork extends this {
         $enter() {
-          this._wifi.stopScan()
-          this._disable()
+          this.tag('JoinAnotherNetwork')._focus()
         }
-        _getFocused() {
-          return this.tag('PairingScreen')
-        }
-        $pressEnter(option) {
-          if (option === 'Cancel') {
-            this._setState('Switch')
-          } else if (option === 'Connect') {
-            this._wifi.connect_last()
-            this._setState('Switch')
-          } else if (option === 'Disconnect') {
-            this._wifi.disconnect().then(() => { })
-            this._setState('Switch')
-            this._forget=true
-          }
-        }
-        $startConnect(password) {
-          if (this._availableNetworks.tag('List').element && password != null) {
-            this._wifi.connect(this._availableNetworks.tag('List').element._item, password)
-            this._forget=false
-          } else {
-            this.patch({
-              FailureMessage: {
-                x: (1920 * 2) / 3 + 40,
-                y: 950,
-                text: { text: 'FAILED' },
-              },
-            })
-            setTimeout(() => {
-              this.childList.remove(this.tag('FailureMessage'))
-            }, 2000)
-          }
+        _handleUp() {
           this._setState('Switch')
         }
+        _handleEnter() {
+          if (this.wifiStatus) {
+            Router.navigate('settings/network/interface/wifi/another')
+          }
+        }
+        _handleDown() {
+          if (this.wifiStatus) {
+            if (this._pairedNetworks.tag('List').length > 0) {
+              this._setState('PairedDevices')
+            } else if (this._availableNetworks.tag('List').length > 0) {
+              this._setState('AvailableDevices')
+            }
+          }
+        }
         $exit() {
-          this.tag('PairingScreen').visible = false
-          this._enable()
+          this.tag('JoinAnotherNetwork')._unfocus()
         }
       },
     ]
@@ -424,99 +414,101 @@ export default class WiFiScreen extends Lightning.Component {
    * @param {string} listname
    * @param {string} dir
    */
+
   _navigate(listname, dir) {
     let list
-    let findex = 4;
-    let list_element_h = 65;
-
     if (listname === 'MyDevices') list = this._pairedNetworks.tag('List')
     else if (listname === 'AvailableDevices') list = this._availableNetworks.tag('List')
     if (dir === 'down') {
-      if (list.index < list.length - 1) {
-        if (listname === 'AvailableDevices') {
-          if (list.index > findex) {
-            list.y = list.y - list_element_h;
-            list.getElement(((list.index - 1) - findex)).visible = false;
-          }
-        }
-        list.setNext()
-      }
+      if (list.index < list.length - 1) list.setNext()
       else if (list.index == list.length - 1) {
+        this._wifi.discoverSSIDs()
+        this._setState('JoinAnotherNetwork')
         if (listname === 'MyDevices' && this._availableNetworks.tag('List').length > 0) {
           this._setState('AvailableDevices')
         }
       }
     } else if (dir === 'up') {
-      if (list.index > 0) {
-        if (listname === 'AvailableDevices') {
-          if (list.y < list_element_h) {
-            list.y = list.y + list_element_h;
-            list.getElement((list.index - 2) - findex).visible = true;
-          }
-        }
-        list.setPrevious();
-      }
+      if (list.index > 0) list.setPrevious()
       else if (list.index == 0) {
         if (listname === 'AvailableDevices' && this._pairedNetworks.tag('List').length > 0) {
           this._setState('PairedDevices')
         } else {
-          this._setState('Switch')
+          this._setState('JoinAnotherNetwork')
         }
       }
     }
   }
+  /**
+   * Function to turn on and off Wi-Fi.
+   */
+  switch() {
+    if (this.wifiStatus) {
+      this._wifi.disconnect()
+      console.log('turning off wifi')
+      this._wifi.setInterface('ETHERNET', true).then(result => {
+        if (result.success) {
+          this._wifi.setDefaultInterface('ETHERNET', true).then(result => {
+            if (result.success) {
+              this._wifi.disconnect()
+              this.wifiStatus = false
+              this.tag('Networks').visible = false
+              this.tag('JoinAnotherNetwork').visible = false
+              this.tag('Switch.Loader').visible = false
+              this.wifiLoading.stop()
+              this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOffWhite.png')
+            }
+          })
+        }
+      })
+    } else {
+      console.log('turning on wifi')
+      this.wifiStatus = true
+      this.tag('Networks').visible = true
+      this.tag('JoinAnotherNetwork').visible = true
+      this.wifiLoading.play()
+      this.tag('Switch.Loader').visible = true
+      this.tag('Switch.Button').src = Utils.asset('images/settings/ToggleOnOrange.png')
+      this._wifi.discoverSSIDs()
+    }
+  }
 
-  
+
   /**
    * Function to activate Wi-Fi plugin.
    */
   _activateWiFi() {
     this._wifi.activate().then(() => {
-      this._wifi.getDefaultInterface().then(result => {
-        if ((result.interface == 'WIFI')|| (result.interface == '')) {
-          this.wifiStatus = true
-          //this._wifi.discoverSSIDs()
-          this.tag('Networks.AvailableNetworks.Loader').visible = true
-          this.tag('Title').text.text = 'Wireless'
-          this.tag('Networks').visible = true
-        }
-      })
+      this.switch()
     })
-    this.tag('Networks.AvailableNetworks.Loader').visible = true
     this._wifi.registerEvent('onWIFIStateChanged', notification => {
+      console.log(JSON.stringify(notification))
       if (notification.state === 2 || notification.state === 5) {
         this._wifi.discoverSSIDs()
-        this.tag('Networks.AvailableNetworks.Loader').visible = true
-        
       }
-      this._setState('Switch')
     })
     this._wifi.registerEvent('onError', notification => {
+      console.log('on errro')
       this._wifi.discoverSSIDs()
-      this.tag('Networks.AvailableNetworks.Loader').visible = true
-      
-      if (notification.code == 4) {
-        this.patch({
-          FailureMessage: {
-            x: (1920 * 2) / 3 + 40,
-            y: 950,
-            text: { text: 'INCORRECT PASSWORD' },
-          },
-        })
-        setTimeout(() => {
-          this.childList.remove(this.tag('FailureMessage'))
-        }, 2000)
+      this._wifi.setInterface('ETHERNET', true).then(res => {
+        if (res.success) {
+          this._wifi.setDefaultInterface('ETHERNET', true)
+        }
+      })
+      if (this.widgets) {
+        this.widgets.fail.notify({ title: 'WiFi Error', msg: this.onError[notification.code] })
+        Router.focusWidget('Fail')
       }
-      this._setState('Switch')
     })
     this._wifi.registerEvent('onAvailableSSIDs', notification => {
-      this.tag('Networks.AvailableNetworks.Loader').visible = false
       this.renderDeviceList(notification.ssids)
-      //should not do this if we do disconnect from ui
-      if ((this._forget==false) && (this.wifiStatus == true)) {
-        this._wifi.connect_last()
+      if (!notification.moreData) {
+        setTimeout(() => {
+          this.tag('Switch.Loader').visible = false
+          this.wifiLoading.stop()
+        }, 1000)
       }
+
     })
-   
   }
 }

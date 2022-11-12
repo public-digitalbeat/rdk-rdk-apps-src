@@ -7,9 +7,11 @@
     "debug": false
   },
   "platformSettings": {
-    "inspector": true,
+    "id": "UIv3",
+    "inspector": false,
     "path": "./static",
     "log": true,
-    "showVersion": true
+    "showVersion": false,
+    "version": "3.7"
   }
 }

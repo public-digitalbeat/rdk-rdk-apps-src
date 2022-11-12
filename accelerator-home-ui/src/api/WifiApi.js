@@ -31,6 +31,12 @@ export const WiFiState = {
 export default class Wifi {
   constructor() {
     this._events = new Map()
+    const config = {
+      host: '127.0.0.1',
+      port: 9998,
+    }
+    this._thunder = ThunderJS(config)
+    this.callsign = 'org.rdk.Wifi'
   }
 
   /**
@@ -38,46 +44,36 @@ export default class Wifi {
    */
   activate() {
     return new Promise((resolve, reject) => {
-      const config = {
-        host: '127.0.0.1',
-        port: 9998,
-        default: 1,
-      }
-      this._thunder = ThunderJS(config)
-      this.callsign = 'org.rdk.Wifi'
+
       this._thunder
         .call('Controller', 'activate', { callsign: this.callsign })
         .then(result => {
-          console.log('Wifi activated', result)
 
           this.getCurrentState().then(state => {
             if (state === WiFiState.DISABLED) {
               this.setEnabled(true)
             }
+            if (state === WiFiState.CONNECTED) {
+              this.setInterface('WIFI', true).then(res => {
+                if (res.success) {
+                  this.setDefaultInterface('WIFI', true)
+                }
+              })
+            }
           })
-          
 
           this._thunder.on(this.callsign, 'onWIFIStateChanged', notification => {
-            console.log('onWIFIStateChanged: ' + notification.state)
             if (this._events.has('onWIFIStateChanged')) {
               this._events.get('onWIFIStateChanged')(notification)
             }
           })
-          this._thunder.on('org.rdk.Network', 'onInterfaceStatusChanged', notification => {
-            console.log('###### onInterfaceStatusChanged: ' + 'interface:'+ notification.interface + ' enabled:' + notification.enabled)
-            if (this._events.has('onInterfaceStatusChanged')) {
-              this._events.get('onInterfaceStatusChanged')(notification)
-            }
-          })
           this._thunder.on(this.callsign, 'onError', notification => {
-            console.log('Error: ' + notification)
             if (this._events.has('onError')) {
               this._events.get('onError')(notification)
             }
           })
 
           this._thunder.on(this.callsign, 'onAvailableSSIDs', notification => {
-            console.log('AvailableSSIDs: ' + JSON.stringify(notification))
             if (notification.moreData === false) {
               this.stopScan()
               notification.ssids = notification.ssids.filter(
@@ -113,7 +109,6 @@ export default class Wifi {
    */
   deactivate() {
     this._events = new Map()
-    this._thunder = null
   }
 
   /**
@@ -124,7 +119,6 @@ export default class Wifi {
       this._thunder
         .call(this.callsign, 'getConnectedSSID')
         .then(result => {
-          console.log('ConnectedSSID: ' + result.ssid)
           resolve(result)
         })
         .catch(err => {
@@ -142,7 +136,7 @@ export default class Wifi {
       this._thunder
         .call(this.callsign, 'startScan', { incremental: false, ssid: '', frequency: '' })
         .then(result => {
-          console.log('startScan success')
+          //console.log('startScan success')
           resolve(result)
         })
         .catch(err => {
@@ -160,7 +154,7 @@ export default class Wifi {
       this._thunder
         .call(this.callsign, 'stopScan')
         .then(result => {
-          console.log('stopScan success')
+          //console.log('stopScan success')
           resolve(result)
         })
         .catch(err => {
@@ -179,7 +173,6 @@ export default class Wifi {
     return new Promise((resolve, reject) => {
       this.disconnect().then(() => {
         console.log(`connect SSID ${device.ssid}`)
-        setTimeout(() => {
         this._thunder
           .call(this.callsign, 'connect', {
             ssid: device.ssid,
@@ -188,111 +181,40 @@ export default class Wifi {
           })
           .then(result => {
             console.log(`connected SSID ${device.ssid}`)
-            //this.saveSSID(device,passphrase)
+            this.setInterface('WIFI', true).then(res => {
+              if (res.success) {
+                this.setDefaultInterface('WIFI', true)
+              }
+            })
             resolve(result)
           })
           .catch(err => {
             console.error(`Connection failed: ${err}`)
             reject(err)
           })
-        },2000)
-      }, reject)
+      })
     })
   }
 
-  //use already saved n/w details in wpa_supplicant
-  connect_last() {
-    return new Promise((resolve, reject) => {
-      this.getCurrentState().then(state => {
-        if (state === WiFiState.DISCONNECTED) {
-          console.log(`connect last SSID `)
-          this.isPaired().then(mresult => {
-            if (mresult.result == 0) {
-              this._thunder
-              .call(this.callsign, 'connect', {})
-              .then(result => {
-                console.log(`reconnected SSID `)
-               resolve(result)
-              })
-              .catch(err => {
-                console.error(`Connection failed: ${err}`)
-                reject(err)
-              })
-            }
-          }, reject)
-        }
-      }, reject)
-    })
-  }
-
-  saveSSID(device, passphrase) {
-    return new Promise((resolve, reject) => {
-      
-        console.log(`save SSID ${device.ssid}`)
-        this._thunder
-          .call(this.callsign, 'saveSSID', {
-            ssid: device.ssid,
-            passphrase: passphrase,
-            securityMode: device.security,
-          })
-          .then(result => {
-            console.log(`saved SSID ${device.ssid}`)
-            resolve(result)
-          })
-          .catch(err => {
-            console.error(`save failed: ${err}`)
-            reject(err)
-          })
-      
-    })
-  }
-  clearSSID() {
-    return new Promise((resolve, reject) => {
-      
-        console.log(`clear SSID ${device.ssid}`)
-        this._thunder
-          .call(this.callsign, 'clearSSID', {})
-          .then(result => {
-            console.log(`clear SSID ${device.ssid}`)
-            resolve(result)
-          })
-          .catch(err => {
-            console.error(`clear failed: ${err}`)
-            reject(err)
-          })
-      
-    })
-  }
-
-  isPaired() {
-    return new Promise((resolve, reject) => {
-      this._thunder.call(this.callsign, 'isPaired', {}).then(
-        result => {
-          console.log('WiFi ispaired: ' + JSON.stringify(result))
-          resolve(result)
-        },
-        err => {
-          console.error(`Can't check paired: ${err}`)
-          reject(err)
-        }
-      )
-    })
-  }
   /**
    * Function to disconnect from the SSID.
    */
   disconnect() {
     return new Promise((resolve, reject) => {
-      this._thunder.call(this.callsign, 'disconnect', {}).then(
-        result => {
+      this._thunder.call(this.callsign, 'disconnect')
+        .then(result => {
           console.log('WiFi disconnected: ' + JSON.stringify(result))
+          this.setInterface('ETHERNET', true).then(res => {
+            if (res.success) {
+              this.setDefaultInterface('ETHERNET', true)
+            }
+          })
           resolve(result)
-        },
-        err => {
+        })
+        .catch(err => {
           console.error(`Can't disconnect WiFi: ${err}`)
-          reject(err)
-        }
-      )
+          reject(false)
+        })
     })
   }
 
@@ -359,6 +281,18 @@ export default class Wifi {
         })
     })
   }
+  getInterfaces() {
+    return new Promise((resolve, reject) => {
+      this._thunder
+        .call('org.rdk.Network', 'getInterfaces')
+        .then(result => {
+          resolve(result)
+        })
+        .catch(err => {
+          console.log('Failed to get Interfaces')
+        })
+    })
+  }
   setInterface(inter, bool) {
     return new Promise((resolve, reject) => {
       this._thunder
@@ -371,7 +305,7 @@ export default class Wifi {
           resolve(result)
         })
         .catch(err => {
-          reject(err)
+          console.error('SetInterface Error', JSON.stringify(err))
         })
     })
   }
@@ -386,8 +320,40 @@ export default class Wifi {
           resolve(result)
         })
         .catch(err => {
-          reject(err)
+          console.error('SetDefaultInterface Error', JSON.stringify(err))
         })
+    })
+  }
+
+  saveSSID(ssid, password, securityMode) {
+    console.log("SAVESSID")
+    return new Promise((resolve, reject) => {
+      this._thunder
+      .call(this.callsign, 'saveSSID', { 
+        ssid: ssid,
+        passphrase: password,
+        securityMode: securityMode
+      })
+      .then(result => {
+        resolve(result)
+      })
+      .catch(err => {
+        console.error('SaveSSID Error', JSON.stringify(err))
+      })
+    })
+  }
+
+  clearSSID(){
+    console.log("CLEARSSID")
+    return new Promise((resolve, reject) => {
+      this._thunder
+      .call(this.callsign, 'clearSSID')
+      .then(result => {
+        resolve(result)
+      })
+      .catch(err => {
+        console.log('Error in clear ssid')
+      })
     })
   }
 }

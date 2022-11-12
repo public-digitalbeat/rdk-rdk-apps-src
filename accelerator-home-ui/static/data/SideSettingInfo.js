@@ -26,7 +26,7 @@
       img: '/images/settings/Bluetooth_Focused.png',
     },
     {
-      title: 'Network',
+      title: 'Wi-Fi',
       url: '/images/settings/wifi_new.png',
       img: '/images/settings/Wifi_Focused.png',
     },
@@ -35,21 +35,6 @@
        url: '/images/usb/usb-white-small.png',
        img: '/images/usb/usb-dark-small.png',
      },  
-     {
-      title: 'System',
-      url: '/images/settings/wifi_new.png',
-      img: '/images/settings/Wifi_Focused.png',
-    },
-    {
-      title: 'Netflix',
-      url: '/images/settings/wifi_new.png',
-      img: '/images/settings/Wifi_Focused.png',
-    },
-    {
-      title: 'Audio',
-      url: '/images/usb/usb-white-small.png',
-      img: '/images/usb/usb-dark-small.png',
-    },   
   ]
 
  

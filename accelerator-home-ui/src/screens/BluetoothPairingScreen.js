@@ -16,103 +16,243 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-import { Lightning, Utils } from '@lightningjs/sdk'
-import { COLORS } from '../colors/Colors'
-import SettingsItem from './../items/SettingsItem'
-
+import { Lightning, Router, Language } from '@lightningjs/sdk'
+import { CONFIG } from "../Config/Config"
+let _item
 /**
  * Class for pairing screen for the Bluetooth.
  */
 export default class BluetoothPairingScreen extends Lightning.Component {
-  static _template() {
-    return {
-      PairingScreen: {
-        x: 0,
-        y: 0,
-        w: 1920 / 3,
-        h: 1080,
-        rect: true,
-        color: 0xff364651,
-      },
-      Title: {
-        x: 20,
-        y: 100,
-        text: { text: '', fontSize: 30, textColor: COLORS.titleColor, fontFace: 'MS-Regular', },
-      },
-      List: {
-        x: 20,
-        y: 150,
-        type: Lightning.components.ListComponent,
-        w: 1920 / 3,
-        h: 400,
-        itemSize: 65,
-        horizontal: false,
-        invertDirection: true,
-        roll: true,
-      },
-      Status: {
-        x: 20,
-        y: 500,
-        Text: {
-          text: {
-            fontFace: 'MS-Light',
-            text: 'Enter the below code in your Bluetooth device and press enter',
-            wordWrapWidth: 1920 / 3 - 70,
-            fontSize: 30,
-          },
-        },
-        Code: {
-          x: 0,
-          y: 60,
-          text: { text: '' },
-        },
-        visible: false,
-      },
+
+
+    set params(args) {
+        if (args.bluetoothItem) {
+            this.item(args.bluetoothItem)
+        }
+        else {
+            Router.navigate('settings/bluetooth')
+        }
     }
-  }
-  set item(item) {
-    this.tag('Status').visible = false
-    this.tag('Title').text = item.name
-    var options = []
-    this._item = item
-    if (item.paired) {
-      if (item.connected) {
-        options = ['Disconnect', 'Unpair', 'Cancel']
-      } else {
-        options = ['Connect', 'Unpair', 'Cancel']
-      }
-    } else {
-      options = ['Pair', 'Cancel']
+
+
+    static _template() {
+        return {
+            w: 1920,
+            h: 2000,
+            rect: true,
+            color: 0xff000000,
+            BluetoothPair: {
+                x: 960,
+                y: 300,
+                Title: {
+                    mountX: 0.5,
+                    text: {
+                        text: "",
+                        fontFace: CONFIG.language.font,
+                        fontSize: 40,
+                        textColor: CONFIG.theme.hex,
+                    },
+                },
+                BorderTop: {
+                    x: 0, y: 75, w: 1558, h: 3, rect: true, mountX: 0.5,
+                },
+                Pairing: {
+                    x: 0,
+                    y: 125,
+                    mountX: 0.5,
+                    text: {
+                        text: "",
+                        fontFace: CONFIG.language.font,
+                        fontSize: 25,
+                    },
+                },
+                Buttons: {
+                    x: 0, y: 200, w: 440, mountX: 0.5, h: 50,
+                    ConnectDisconnect: {
+                        x: 0, w: 200, mountX: 0.5, h: 50, rect: true, color: 0xFFFFFFFF,
+                        Title: {
+                            x: 100,
+                            y: 25,
+                            mount: 0.5,
+                            text: {
+                                text: "",
+                                fontFace: CONFIG.language.font,
+                                fontSize: 22,
+                                textColor: 0xFF000000
+                            },
+                        }
+                    },
+                    Unpair: {
+                        x: 0 + 220, w: 200, mountX: 0.5, h: 50, rect: true, color: 0xFFFFFFFF,
+                        Title: {
+                            x: 100,
+                            y: 25,
+                            mount: 0.5,
+                            text: {
+                                text: Language.translate("Unpair"),
+                                fontFace: CONFIG.language.font,
+                                fontSize: 22,
+                                textColor: 0xFF000000
+                            },
+                        }
+                    },
+                    Cancel: {
+                        x: 0 + 220 + 220, w: 200, mountX: 0.5, h: 50, rect: true, color: 0xFF7D7D7D,
+                        Title: {
+                            x: 100,
+                            y: 25,
+                            mount: 0.5,
+                            text: {
+                                text: Language.translate("Cancel"),
+                                fontFace: CONFIG.language.font,
+                                fontSize: 22,
+                                textColor: 0xFF000000
+                            },
+                        }
+                    },
+                },
+                BorderBottom: {
+                    x: 0, y: 300, w: 1558, h: 3, rect: true, mountX: 0.5,
+                },
+            },
+        }
     }
-    this.tag('List').items = options.map((item, index) => {
-      return {
-        ref: item,
-        w: 1920 / 3,
-        h: 65,
-        type: SettingsItem,
-        item: item,
-      }
-    })
-  }
 
-  set code(code) {
-    this.tag('Status.Code').text.text = code
-    this.tag('Status').visible = true
-  }
+    item(item) {
+        _item = item
+        this._setState('ConnectDisconnect')
+        this.tag('Title').text = item.name
+        if (item.connected) {
+            this.tag('BluetoothPair.Buttons.ConnectDisconnect.Title').text = 'Disconnect'
+        } else {
+            this.tag('BluetoothPair.Buttons.ConnectDisconnect.Title').text = 'Connect'
+        }
+    }
 
-  _getFocused() {
-    return this.tag('List').element
-  }
+    _init() {
+        this._setState('ConnectDisconnect')
+    }
 
-  _handleDown() {
-    this.tag('List').setNext()
-  }
+    static _states() {
+        return [
+            class ConnectDisconnect extends this {
+                $enter() {
+                    this._focus()
+                }
+                _handleEnter() {
+                    // this.tag('Pairing').text = "Someting is wrong " + _item.name
+                    if (_item.connected) {
+                        // this.tag('Pairing').text = "Connecting to " + _item.name
+                        //this.fireAncestors('$pressEnter', 'Disconnect')
+                        Router.navigate('settings/bluetooth', { action: 'Disconnect' })
+                    } else {
+                        // this.tag('Pairing').text = "Disconnecting from " + _item.name
+                        // this.fireAncestors('$pressEnter', 'Connect')
+                        Router.navigate('settings/bluetooth', { action: 'Connect' })
+                    }
+                }
+                _handleRight() {
+                    this._setState('Unpair')
+                }
+                _focus() {
+                    this.tag('BluetoothPair.Buttons.ConnectDisconnect').patch({
+                        color: CONFIG.theme.hex
+                    })
+                    this.tag('BluetoothPair.Buttons.ConnectDisconnect.Title').patch({
+                        text: {
+                            textColor: 0xFFFFFFFF
+                        }
+                    })
+                }
+                _unfocus() {
+                    this.tag('BluetoothPair.Buttons.ConnectDisconnect').patch({
+                        color: 0xFFFFFFFF
+                    })
+                    this.tag('BluetoothPair.Buttons.ConnectDisconnect.Title').patch({
+                        text: {
+                            textColor: 0xFF000000
+                        }
+                    })
+                }
+                $exit() {
+                    this._unfocus()
+                }
+            },
+            class Unpair extends this {
+                $enter() {
+                    this._focus()
+                }
+                _handleEnter() {
+                    //this.fireAncestors('$pressEnter', 'Unpair')
+                    Router.navigate('settings/bluetooth', { action: 'Unpair' })
 
-  _handleUp() {
-    this.tag('List').setPrevious()
-  }
+                }
+                _handleRight() {
+                    this._setState('Cancel')
+                }
+                _handleLeft() {
+                    this._setState('ConnectDisconnect')
+                }
+                _focus() {
+                    this.tag('Unpair').patch({
+                        color: CONFIG.theme.hex
+                    })
+                    this.tag('Unpair.Title').patch({
+                        text: {
+                            textColor: 0xFFFFFFFF
+                        }
+                    })
+                }
+                _unfocus() {
+                    this.tag('Unpair').patch({
+                        color: 0xFFFFFFFF
+                    })
+                    this.tag('Unpair.Title').patch({
+                        text: {
+                            textColor: 0xFF000000
+                        }
+                    })
+                }
+                $exit() {
+                    this._unfocus()
+                }
+            },
+            class Cancel extends this {
+                $enter() {
+                    this._focus()
+                }
+                _handleEnter() {
+                    //this.fireAncestors('$pressEnter', 'Cancel')
+                    Router.navigate('settings/bluetooth', { action: 'Cancel' })
+                }
+                _handleLeft() {
+                    this._setState('Unpair')
+                }
+                _focus() {
+                    this.tag('Cancel').patch({
+                        color: CONFIG.theme.hex
+                    })
+                    this.tag('Cancel.Title').patch({
+                        text: {
+                            textColor: 0xFFFFFFFF
+                        }
+                    })
+                }
+                _unfocus() {
+                    this.tag('Cancel').patch({
+                        color: 0xFF7D7D7D
+                    })
+                    this.tag('Cancel.Title').patch({
+                        text: {
+                            textColor: 0xFF000000
+                        }
+                    })
+                }
+                $exit() {
+                    this._unfocus()
+                }
+            },
+        ]
+    }
 
-  _handleEnter() {
-    this.fireAncestors('$pressEnter', this.tag('List').element.ref)
-  }
 }

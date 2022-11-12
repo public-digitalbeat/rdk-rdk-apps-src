@@ -19,14 +19,20 @@
 import { Lightning } from '@lightningjs/sdk'
 import SidePanelItem from '../items/SidePanelItem.js'
 import HomeApi from '../api/HomeApi.js'
+import Keymap from '../Config/Keymap.js'
 
 /** Class for side panel in home UI */
 export default class SidePanel extends Lightning.Component {
   static _template() {
     return {
+      color: 0xff000000,
+      rect: true,
+      y: 270,
+      w: 200,
+      h: 810,
       SidePanel: {
-        x: 130,
-        y: 0,
+        x: 0,
+        y: 127,
         w: 240,
         h: 750,
         type: Lightning.components.ListComponent,
@@ -38,29 +44,29 @@ export default class SidePanel extends Lightning.Component {
   }
 
   _init() {
-    console.log('Side Panel init')
     this.homeApi = new HomeApi()
     this.tag('SidePanel').sidePanelItems = this.homeApi.getSidePanelInfo()
     this.sidePanelData = this.homeApi.getSidePanelInfo()
     this._setState('SidePanel')
     this.indexVal = 0
+    this.prevIndex = 0
   }
 
   /**
    * Function to set items in side panel.
    */
   set sidePanelItems(items) {
-    this.tag('SidePanel').patch({ x: 0 })
+    this.tag('SidePanel').patch({ x: 105 })
     this.tag('SidePanel').items = items.map((info, index) => {
       this.data = info
       return {
-        w: 204,
-        h: 184,
-        y: index == 0 ? 30 : (index == 1 ? 115 : (index == 2 ? 260 : 470)),
+        w: 50,
+        h: 50,
+        y: index == 0 ? 20 : (index + 1) * 20,
         type: SidePanelItem,
         data: info,
-        focus: 0.7,
-        unfocus: 0.6,
+        focus: 1.1,
+        unfocus: 1,
         x_text: 100,
         y_text: 160,
         text_focus: 1.1,
@@ -110,7 +116,20 @@ export default class SidePanel extends Lightning.Component {
    * Function to set index value of side panel.
    */
   set index(index) {
+    this.tag('SidePanel').items[this.prevIndex].clearColor()
     this.indexVal = index
+  }
+
+  set deFocus(val) {
+    if (val) {
+      this.tag('SidePanel').items[this.prevIndex].clearColor()
+    } else {
+      this.tag('SidePanel').items[this.prevIndex].setColor()
+    }
+
+  }
+  set scrollableLastRow(bool) {
+    this.isLastRowScrollable = bool;
   }
 
   static _states() {
@@ -118,29 +137,30 @@ export default class SidePanel extends Lightning.Component {
       class SidePanel extends this {
         _getFocused() {
           if (this.tag('SidePanel').length) {
-            if (this.indexVal == 3) {
-              this.fireAncestors('$scroll', -200)
-            }
-            else {
-              this.fireAncestors('$scroll', 0)
-            }
             return this.tag('SidePanel').items[this.indexVal]
           }
         }
         _handleKey(key) {
-          if (key.keyCode == 39 || key.keyCode == 13) {
-            this.fireAncestors('$goToMainView', this.indexVal)
-          } else if (key.keyCode == 40) {
+          if (key.keyCode == Keymap.ArrowRight || key.keyCode == Keymap.Enter) {
+            if (this.prevIndex != this.indexVal) {
+              this.tag('SidePanel').items[this.prevIndex].clearColor()
+            }
+            this.prevIndex = this.indexVal
+            this.fireAncestors('$goToMainView', this.tag('SidePanel').items[this.indexVal], this.indexVal)
+          } else if (key.keyCode == Keymap.ArrowDown) {
             if (this.tag('SidePanel').length - 1 != this.indexVal) {
               this.indexVal = this.indexVal + 1
             }
             return this.tag('SidePanel').items[this.indexVal]
-          } else if (key.keyCode == 38) {
-            if (0 != this.indexVal) {
+          } else if (key.keyCode == Keymap.ArrowUp) {
+            if (0 === this.indexVal) {
+              this.fireAncestors('$goToTopPanel', 0)
+            } else {
               this.indexVal = this.indexVal - 1
+              return this.tag('SidePanel').items[this.indexVal]
             }
-            return this.tag('SidePanel').items[this.indexVal]
-          } else return false;
+
+          }
         }
       },
     ]
